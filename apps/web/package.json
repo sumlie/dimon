@@ -2,12 +2,14 @@
   "name": "web",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "biome check",
-    "format": "biome format --write"
+    "format": "biome format --write",
+    "steigt": "steiger ./src"
   },
   "dependencies": {
     "next": "16.3.5",
@@ -16,10 +18,12 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.2",
+    "@feature-sliced/steiger-plugin": "^0.8.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "steiger": "^0.7.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
