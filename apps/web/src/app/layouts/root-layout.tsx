@@ -34,7 +34,7 @@ export const metadata: Metadata = {
 export function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${inter.variable} ${impact.variable} antialiased`}>
-      <body>{children}</body>
+      <body className="relative w-full">{children}</body>
     </html>
   );
 }
