@@ -4,6 +4,7 @@ import { FeaturedProducts } from "@/pages/home/ui/sections/featured-products";
 import { Manifesto } from "@/pages/home/ui/sections/manifesto";
 import { ScrollGallery } from "@/pages/home/ui/sections/scroll-gallery";
 import { Community } from "@/pages/home/ui/sections/community";
+import { Footer } from "@/widgets/footer/ui/footer";
 
 export function HomePage() {
   return (
@@ -15,6 +16,7 @@ export function HomePage() {
       <FeaturedProducts title="новинки" />
       <ScrollGallery />
       <Community subscriberCount={4300} />
+      <Footer />
     </>
   );
 }
