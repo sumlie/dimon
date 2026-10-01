@@ -49,7 +49,7 @@ export function Header() {
     <header
       ref={headerRef}
       className={cn(
-        "fixed left-0 top-0 z-50 flex w-full items-center justify-between px-5 py-3.5 transition-[background-color,backdrop-filter,box-shadow] duration-300 sm:px-8 sm:py-4",
+        "fixed left-0 top-0 z-50 flex w-full items-center justify-between px-5 py-3.5 transition-[background-color,backdrop-filter,box-shadow] duration-300 sm:py-4",
         scrolled
           ? "bg-white/70 shadow-[0_1px_0_0_rgba(0,0,0,0.06)] backdrop-blur-md"
           : "bg-white",

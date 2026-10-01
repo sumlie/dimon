@@ -1,3 +1,3 @@
 export * from "./ui/product";
-export * from "./model/types";
+export { type Product } from "./model/types";
 export * from "./config/products";

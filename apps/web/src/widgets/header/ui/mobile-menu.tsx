@@ -17,7 +17,7 @@ export function MobileMenu({ onClose }: MobileMenuProps) {
   useEffect(() => setMounted(true), []);
 
   const menu = (
-    <div className="fixed inset-0 z-90 flex min-h-dvh flex-col overflow-y-auto bg-white lg:hidden">
+    <div className="fixed inset-0 z-90 flex min-h-dvh flex-col overflow-y-auto bg-white lg:hidden overflow-x-hidden">
       <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rotate-[-8deg] select-none font-display text-[13rem] uppercase leading-none text-red-600/7">
         <Dimon />
       </div>
