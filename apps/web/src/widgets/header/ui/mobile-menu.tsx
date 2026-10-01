@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { ArrowRight, X } from "lucide-react";
 import { RiTelegram2Line } from "react-icons/ri";
-import { Button, ButtonLink } from "@/shared/ui/button";
+import { Button} from "@/shared/ui/button";
 import { Dimon } from "@/shared/ui/dimon";
 import { NAV_LINKS } from "../config/links";
 
@@ -37,7 +37,7 @@ export function MobileMenu({ onClose }: MobileMenuProps) {
       <nav className="relative z-10 flex flex-1 flex-col justify-center px-6 font-sans lowercase sm:px-8">
         <div className="mx-auto w-fit flex-col items-center">
           {NAV_LINKS.map((link, i) => (
-            <ButtonLink
+            <Button
               key={link.label}
               href={link.href}
               variant="text"
@@ -51,13 +51,13 @@ export function MobileMenu({ onClose }: MobileMenuProps) {
               <span className="transition-transform group-hover/nav:translate-x-2">
                 {link.label}
               </span>
-            </ButtonLink>
+            </Button>
           ))}
         </div>
       </nav>
 
       <div className="relative z-10 border-t-2 border-black px-6 py-6 sm:px-8">
-        <ButtonLink
+        <Button
           href="#!"
           pd="lg"
           onClick={onClose}
@@ -70,7 +70,7 @@ export function MobileMenu({ onClose }: MobileMenuProps) {
             width={22}
             className="transition-transform group-hover/button:-rotate-45"
           />
-        </ButtonLink>
+        </Button>
       </div>
     </div>
   );
