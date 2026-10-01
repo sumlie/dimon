@@ -1,10 +1,10 @@
-import { ButtonLink } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button/button";
 import { ShoppingBag } from "lucide-react";
 
 export function CartButton() {
   const count = 0;
   return (
-    <ButtonLink href="#!" variant="social" size="mini" pd="none">
+    <Button href="#!" variant="social" size="mini" pd="none">
       <span className="relative flex h-7 w-7 items-center justify-center">
         <ShoppingBag size={22} />
 
@@ -14,6 +14,6 @@ export function CartButton() {
       </span>
 
       <span>корзина</span>
-    </ButtonLink>
+    </Button>
   );
 }
