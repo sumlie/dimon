@@ -12,9 +12,9 @@ export function FeaturedProducts({
   catalogHref = "/catalog",
 }: FeaturedProductsProps) {
   return (
-    <section className="w-full bg-white px-8 py-24 sm:py-32">
-      <div className="flex items-end justify-between gap-6">
-        <h2 className="font-sans text-4xl font-extrabold lowercase tracking-tight text-black sm:text-5xl">
+    <section className="w-full bg-white px-5 py-16 sm:px-8 sm:py-24 lg:py-32">
+      <div className="flex items-baseline-last justify-between gap-4 sm:gap-6">
+        <h2 className="font-sans text-3xl font-extrabold lowercase tracking-tight text-black sm:text-4xl lg:text-5xl">
           {title}
         </h2>
 
@@ -23,7 +23,7 @@ export function FeaturedProducts({
           variant="text"
           size="sm"
           pd="none"
-          className="hidden shrink-0 items-center gap-1 lowercase sm:flex"
+          className="shrink-0 items-center gap-1 lowercase"
         >
           весь каталог
           <ArrowRight
@@ -34,26 +34,11 @@ export function FeaturedProducts({
         </Button>
       </div>
 
-      <div className="mt-12 grid grid-cols-2 gap-x-4 gap-y-10 sm:grid-cols-3 lg:grid-cols-4">
+      <div className="mt-8 grid grid-cols-2 gap-x-3 gap-y-8 sm:mt-12 sm:gap-x-4 sm:gap-y-10 sm:grid-cols-3 lg:grid-cols-4">
         {PRODUCTS.map((product) => (
           <Product key={product.id} product={product} />
         ))}
       </div>
-
-      <Button
-        href={catalogHref}
-        variant="text"
-        size="sm"
-        pd="none"
-        className="mt-14 flex w-fit items-center gap-1 lowercase sm:hidden"
-      >
-        весь каталог
-        <ArrowRight
-          size={16}
-          strokeWidth={1.5}
-          className="transition-transform group-hover/button:-rotate-45"
-        />
-      </Button>
     </section>
   );
 }
