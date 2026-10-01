@@ -1,7 +1,7 @@
 import { Button as ButtonPrimitive } from "@base-ui/react/button";
 import { cva, type VariantProps } from "class-variance-authority";
 import Link, { type LinkProps } from "next/link";
-import type { ComponentProps } from "react";
+import type { ComponentProps, ReactNode } from "react";
 import { cn } from "@/shared/lib/cn";
 
 export const buttonVariants = cva(
@@ -15,8 +15,13 @@ export const buttonVariants = cva(
         outline:
           "border-2 border-black bg-transparent text-black hover:bg-black hover:text-white",
 
-        text:
-          "text-black hover:text-red-600",
+        text: "text-black hover:text-red-600",
+
+        // та же текстовая ссылка, но под тёмный фон (футер и т.п.)
+        textInvert: "text-white hover:text-red-600",
+
+        // приглушённая подчёркнутая ссылка внутри абзаца на тёмном фоне
+        muted: "text-white/40 underline underline-offset-2 hover:text-white",
 
         white:
           "border-2 border-white bg-white text-black hover:bg-transparent hover:text-white",
@@ -24,29 +29,40 @@ export const buttonVariants = cva(
         whiteOutline:
           "border-2 border-white bg-transparent text-white hover:bg-white hover:text-black",
 
-        icon:
-          "text-black hover:text-red-600",
+        icon: "text-black hover:text-red-600",
 
-        social:
-          "relative flex-col gap-0 text-black hover:text-red-600",
+        social: "relative flex-col gap-0 text-black hover:text-red-600",
+
+        // квадратная кнопка-иконка в рамке — соцсети в футере
+        iconBox:
+          "border border-white/20 text-white hover:border-red-600 hover:text-red-600",
       },
 
       size: {
-        sm: "gap-1.5 text-base",
-        default: "gap-2 text-lg",
-        lg: "gap-2.5 text-lg",
+        sm: "gap-1.5 text-sm sm:text-base",
+        default: "gap-2 text-base sm:text-lg",
+        lg: "gap-2 text-base sm:gap-2.5 sm:text-lg",
 
-        icon: "h-10 w-10",
-        social: "text-base",
-        mini: "text-sm",
+        icon: "h-9 w-9 sm:h-10 sm:w-10",
+        social: "text-xs sm:text-sm",
+        mini: "text-[11px] sm:text-xs",
+
+        // не задаёт свой размер текста — наследует от родителя;
+        // нужен для ссылок внутри обычного текста/абзаца
+        inherit: "",
       },
 
       pd: {
         default: "",
-        sm: "px-4 py-2",
-        md: "px-8 py-3",
-        lg: "px-10 py-3",
+        sm: "px-3 py-1.5 sm:px-4 sm:py-2",
+        md: "px-6 py-2.5 sm:px-8 sm:py-3",
+        lg: "px-7 py-2.5 sm:px-10 sm:py-3",
         none: "",
+      },
+
+      fullWidthMobile: {
+        true: "w-full sm:w-fit",
+        false: "",
       },
     },
 
@@ -54,44 +70,51 @@ export const buttonVariants = cva(
       variant: "default",
       size: "default",
       pd: "md",
+      fullWidthMobile: false,
     },
   },
 );
 
-export type ButtonProps = ComponentProps<typeof ButtonPrimitive> &
-  VariantProps<typeof buttonVariants>;
+type ButtonOwnProps = VariantProps<typeof buttonVariants> & {
+  className?: string;
+  children?: ReactNode;
+};
 
-export type ButtonLinkProps = LinkProps &
-  Omit<ComponentProps<"a">, "href"> &
-  VariantProps<typeof buttonVariants>;
+type AsLink = ButtonOwnProps &
+  LinkProps &
+  Omit<ComponentProps<"a">, "href"> & {
+    href: LinkProps["href"];
+  };
+
+type AsButton = ButtonOwnProps &
+  Omit<ComponentProps<typeof ButtonPrimitive>, "href"> & {
+    href?: undefined;
+  };
+
+export type ButtonProps = AsLink | AsButton;
 
 export function Button({
   className,
   variant,
   size,
   pd,
+  fullWidthMobile,
   ...props
 }: ButtonProps) {
+  const classes = cn(
+    buttonVariants({ variant, size, pd, fullWidthMobile, className }),
+  );
+
+  if (props.href !== undefined) {
+    const { href, ...rest } = props as AsLink;
+    return <Link href={href} className={classes} {...rest} />;
+  }
+
   return (
     <ButtonPrimitive
       data-slot="button"
-      className={cn(buttonVariants({ variant, size, pd, className }))}
-      {...props}
-    />
-  );
-}
-
-export function ButtonLink({
-  className,
-  variant,
-  size,
-  pd,
-  ...props
-}: ButtonLinkProps) {
-  return (
-    <Link
-      className={cn(buttonVariants({ variant, size, pd, className }))}
-      {...props}
+      className={classes}
+      {...(props as AsButton)}
     />
   );
 }
