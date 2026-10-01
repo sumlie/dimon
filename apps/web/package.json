@@ -20,6 +20,7 @@
     "@base-ui/react": "^1.8.0",
     "@biomejs/biome": "2.4.2",
     "@feature-sliced/steiger-plugin": "^0.8.0",
+    "@next/env": "^16.3.8",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
