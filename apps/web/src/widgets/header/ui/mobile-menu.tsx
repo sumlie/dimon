@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { ArrowRight, X } from "lucide-react";
 import { RiTelegram2Line } from "react-icons/ri";
-import { Button} from "@/shared/ui/button";
+import { Button } from "@/shared/ui/button";
 import { Dimon } from "@/shared/ui/dimon";
 import { NAV_LINKS } from "../config/links";
 
@@ -17,25 +17,19 @@ export function MobileMenu({ onClose }: MobileMenuProps) {
   useEffect(() => setMounted(true), []);
 
   const menu = (
-    <div className="fixed inset-0 z-90 flex flex-col overflow-hidden bg-white lg:hidden">
+    <div className="fixed inset-0 z-90 flex min-h-dvh flex-col overflow-y-auto bg-white lg:hidden">
       <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rotate-[-8deg] select-none font-display text-[13rem] uppercase leading-none text-red-600/7">
         <Dimon />
       </div>
 
-      <div className="relative z-10 flex items-center justify-end px-6 py-4 sm:px-8">
-        <Button
-          variant="icon"
-          size="icon"
-          pd="none"
-          onClick={onClose}
-          aria-label="закрыть меню"
-        >
+      <div className="relative z-10 flex shrink-0 items-center justify-start -ml-2 -pt-1 px-6 py-4 sm:px-8">
+        <Button variant="icon" size="icon" pd="none" onClick={onClose} aria-label="закрыть меню">
           <X size={24} strokeWidth={1.75} />
         </Button>
       </div>
 
-      <nav className="relative z-10 flex flex-1 flex-col justify-center px-6 font-sans lowercase sm:px-8">
-        <div className="mx-auto w-fit flex-col items-center">
+      <nav className="relative z-10 flex flex-1 flex-col justify-center px-6 py-8 font-sans lowercase sm:px-8">
+        <div className="mx-auto flex w-fit flex-col items-center">
           {NAV_LINKS.map((link, i) => (
             <Button
               key={link.label}
@@ -48,6 +42,7 @@ export function MobileMenu({ onClose }: MobileMenuProps) {
               <span className="font-mono text-base text-red-600">
                 {String(i + 1).padStart(2, "0")}
               </span>
+
               <span className="transition-transform group-hover/nav:translate-x-2">
                 {link.label}
               </span>
@@ -56,13 +51,8 @@ export function MobileMenu({ onClose }: MobileMenuProps) {
         </div>
       </nav>
 
-      <div className="relative z-10 border-t-2 border-black px-6 py-6 sm:px-8">
-        <Button
-          href="#!"
-          pd="lg"
-          onClick={onClose}
-          className="w-full justify-center gap-2"
-        >
+      <div className="relative z-10 shrink-0 border-t-2 border-black px-6 py-6 sm:px-8">
+        <Button href="#!" pd="lg" onClick={onClose} className="w-full justify-center gap-2">
           <RiTelegram2Line size={20} />
           димоны
           <ArrowRight

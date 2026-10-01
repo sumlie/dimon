@@ -108,14 +108,14 @@ export function HeroSection() {
   );
 
   return (
-    <section className="relative h-dvh w-full">
+    <section className="relative h-dvh w-full pt-20">
       <div className="h-full w-full sticky top-0 flex items-center justify-center px-6">
         <div className="flex flex-col items-center gap-8 sm:gap-10 lg:gap-12">
           <div
             ref={spacerRef}
             aria-hidden
             className="invisible font-display leading-none tracking-wide uppercase"
-            style={{ fontSize: "clamp(4.5rem, 22vw, 11.625rem)" }}
+            style={{ fontSize: "clamp(6.5rem, 22vw, 11.625rem)" }}
           >
             <Dimon />
           </div>
