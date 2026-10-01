@@ -19,7 +19,7 @@ export function Community({
   return (
     <section className="w-full border-t-0 border-2 border-black bg-white">
       <div className="grid grid-cols-1 divide-y-2 divide-black lg:grid-cols-[38%_1fr] sm:divide-x-2 lg:divide-y-0">
-        <div className="flex flex-col justify-center gap-2 px-5 py-10 sm:gap-3 sm:px-12 sm:py-24 text-center items-center">
+        <div className="flex flex-col justify-center gap-2 px-5 py-10 sm:gap-3 sm:px-12 sm:py-24 max-sm:text-center max-sm:items-center">
           <p className="font-sans text-base lowercase sm:text-2xl">с нами уже</p>
 
           <p className="flex flex-wrap items-baseline gap-x-3 leading-none sm:gap-x-4">
@@ -42,9 +42,9 @@ export function Community({
           </p>
         </div>
 
-        <div className="flex flex-col justify-between items-center gap-6 px-5 py-10 sm:gap-10 sm:px-12 sm:py-24">
+        <div className="flex flex-col justify-between max-sm:items-center gap-6 px-5 py-10 sm:gap-10 sm:px-12 sm:py-24">
           <p
-            className="text-center font-sans font-extrabold lowercase leading-[1.05] tracking-tight text-black"
+            className="max-sm:text-center font-sans font-extrabold lowercase leading-[1.05] tracking-tight text-black"
             style={{ fontSize: "clamp(1.75rem, 7vw, 3.5rem)" }}
           >
             можешь остаться снаружи, но лучше войти в{" "}

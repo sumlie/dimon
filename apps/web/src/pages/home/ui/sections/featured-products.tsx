@@ -1,6 +1,7 @@
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/shared/ui/button";
-import { Product, PRODUCTS } from "@/entities/product";
+import { Product } from "@/entities/product/ui/product";
+import { PRODUCTS } from "@/entities/product";
 
 type FeaturedProductsProps = {
   title?: string;
@@ -12,7 +13,7 @@ export function FeaturedProducts({
   catalogHref = "/catalog",
 }: FeaturedProductsProps) {
   return (
-    <section className="w-full bg-white px-5 py-16 sm:px-8 sm:py-24 lg:py-32">
+    <section className="w-full bg-white px-5 sm:px-8 py-16 sm:py-24 lg:py-32">
       <div className="flex items-baseline-last justify-between gap-4 sm:gap-6">
         <h2 className="font-sans text-3xl font-extrabold lowercase tracking-tight text-black sm:text-4xl lg:text-5xl">
           {title}
