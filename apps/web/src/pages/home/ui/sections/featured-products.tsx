@@ -1,7 +1,5 @@
-import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { ButtonLink } from '@/shared/ui/button';
-
+import { Button } from "@/shared/ui/button";
 import { Product, PRODUCTS } from "@/entities/product";
 
 type FeaturedProductsProps = {
@@ -20,21 +18,20 @@ export function FeaturedProducts({
           {title}
         </h2>
 
-        <ButtonLink
+        <Button
           href={catalogHref}
           variant="text"
           size="sm"
           pd="none"
-          className="group hidden shrink-0 items-center gap-1 lowercase sm:flex"
+          className="hidden shrink-0 items-center gap-1 lowercase sm:flex"
         >
           весь каталог
-
           <ArrowRight
             size={16}
             strokeWidth={1.5}
-            className="transition-transform group-hover:-rotate-45"
+            className="transition-transform group-hover/button:-rotate-45"
           />
-        </ButtonLink>
+        </Button>
       </div>
 
       <div className="mt-12 grid grid-cols-2 gap-x-4 gap-y-10 sm:grid-cols-3 lg:grid-cols-4">
@@ -43,18 +40,20 @@ export function FeaturedProducts({
         ))}
       </div>
 
-      <Link
+      <Button
         href={catalogHref}
-        className="group mt-14 flex w-fit items-center gap-1 font-sans text-sm lowercase text-black transition-colors hover:text-red-600 sm:hidden"
+        variant="text"
+        size="sm"
+        pd="none"
+        className="mt-14 flex w-fit items-center gap-1 lowercase sm:hidden"
       >
         весь каталог
-
         <ArrowRight
           size={16}
           strokeWidth={1.5}
-          className="transition-transform group-hover:-rotate-45"
+          className="transition-transform group-hover/button:-rotate-45"
         />
-      </Link>
+      </Button>
     </section>
   );
 }

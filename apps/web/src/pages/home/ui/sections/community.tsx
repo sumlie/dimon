@@ -1,4 +1,4 @@
-import { ButtonLink } from "@/shared/ui/button";
+import { Button } from "@/shared/ui/button";
 import { ArrowRight } from "lucide-react";
 import { RiTelegram2Line } from "react-icons/ri";
 
@@ -47,7 +47,7 @@ export function Community({
             <span className="text-red-600">наши ряды</span>.
           </p>
 
-          <ButtonLink
+          <Button
             href={channelUrl}
             target="_blank"
             rel="noopener noreferrer"
@@ -56,7 +56,7 @@ export function Community({
             <RiTelegram2Line size={20} />
             <span className="ml-1">в телеграм</span>
             <ArrowRight strokeWidth={1.5} className="transition-transform group-hover:-rotate-45" />
-          </ButtonLink>
+          </Button>
         </div>
       </div>
     </section>
