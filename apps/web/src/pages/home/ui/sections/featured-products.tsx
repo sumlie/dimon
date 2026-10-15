@@ -35,7 +35,7 @@ export function FeaturedProducts({
         </Button>
       </div>
 
-      <div className="mt-8 grid grid-cols-2 gap-x-3 gap-y-8 sm:mt-12 sm:gap-x-4 sm:gap-y-10 sm:grid-cols-3 lg:grid-cols-4">
+      <div className="mt-8 grid grid-cols-2 gap-x-3 gap-y-8 sm:mt-12 sm:gap-x-4 sm:gap-y-10 lg:grid-cols-4">
         {PRODUCTS.map((product) => (
           <Product key={product.id} product={product} />
         ))}

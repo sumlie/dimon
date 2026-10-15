@@ -2,22 +2,29 @@ import { Dimon } from "@/shared/ui/dimon";
 
 export function Manifesto() {
   return (
-    <section className="w-full bg-white px-5 py-8 sm:px-4 sm:py-12 lg:px-10">
+    <section className="w-full border-y-2 border-black bg-black px-5 py-12 sm:px-8 sm:py-16 lg:px-10 lg:py-24">
       <p
-        className="font-sans font-black leading-[1.1] max-sm:text-center max-sm:leading-[1.2] lowercase text-black text-balance"
-        style={{ 
-          fontSize: "clamp(2.5rem, 11vw, 7.5rem)", 
-        }}
+        className="
+          font-sans font-black lowercase text-white text-balance
+          leading-[1.2] sm:leading-[1.1]
+          text-[clamp(2.5rem,11vw,3rem)]
+          sm:text-[clamp(2.5rem,7.5vw,5rem)]
+          lg:text-[clamp(2.5rem,4.6vw,7rem)]
+        "
       >
-        <span className="block sm:inline">мы не придумываем,</span>{" "}
-        <span className="whitespace-nowrap sm:whitespace-normal">что вам носить</span>
-        <br className="hidden sm:block" />
-        <span className="block sm:inline">мы просто <br /> делаем</span>{" "}
-        <span className="text-red-600 font-display tracking-[0.01em] max-sm:leading-normal whitespace-nowrap">
-          <Dimon />ОВ
+        <span className="block text-center sm:text-left">
+          мы не придумываем,{" "}
+          <span className="whitespace-nowrap sm:whitespace-normal">
+            что вам носить
+          </span>
+        </span>
+        <span className="mt-[0.2em] block text-center sm:mt-[0.1em] sm:text-right">
+          мы просто <br className="sm:hidden" /> делаем{" "}
+          <span className="whitespace-nowrap font-display tracking-[0.01em] text-red-600 max-sm:leading-normal">
+            <Dimon />ОВ
+          </span>
         </span>
       </p>
     </section>
   );
 }
-

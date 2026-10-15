@@ -32,26 +32,26 @@ export function Product({ product }: ProductProps) {
           <span className="flex items-baseline gap-1 sm:gap-1.5">
             {product.oldPrice ? (
               <span className="text-xs text-neutral-400 line-through sm:text-base">
-                {product.oldPrice}
+                {product.oldPriceByn}
               </span>
             ) : null}
 
             <span
               className={
-                product.oldPrice ? "text-red-600" : "text-neutral-500"
+                product.oldPriceByn ? "text-red-600" : "text-neutral-500"
               }
             >
-              {product.price}
+              {product.priceByn}
             </span>
           </span>
 
           <span className="flex items-baseline gap-1 text-xs text-neutral-400 sm:gap-1.5 sm:text-sm">
-            {product.oldPriceByn ? (
-              <span className="line-through">{product.oldPriceByn}</span>
+            {product.oldPrice ? (
+              <span className="line-through">{product.oldPrice}</span>
             ) : null}
 
-            <span className={product.oldPriceByn ? "text-red-500" : ""}>
-              {product.priceByn}
+            <span className={product.oldPrice ? "text-red-500" : ""}>
+              {product.price}
             </span>
           </span>
         </span>

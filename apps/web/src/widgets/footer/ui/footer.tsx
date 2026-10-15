@@ -12,7 +12,7 @@ export function Footer() {
   return (
     <footer className="w-full bg-black text-white">
       <div className="mx-auto px-6 py-12 sm:px-8 sm:py-16 lg:px-12 lg:py-20">
-        <div className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3 sm:gap-x-8 sm:gap-y-12 lg:grid-cols-4 xl:grid-cols-6">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3 sm:gap-x-8 sm:gap-y-12 lg:grid-cols-4 xl:grid-cols-5">
           {FOOTER_COLUMNS.map((column) => (
             <div key={column.title}>
               <p className="font-sans text-sm lowercase text-white/40">{column.title}</p>

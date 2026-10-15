@@ -8,14 +8,12 @@ export const FOOTER_COLUMNS = [
   {
     title: "каталог",
     links: [
-      { label: "худи", href: "#!" },
       { label: "футболки", href: "#!" },
-      { label: "лонгсливы", href: "#!" },
-      { label: "штаны и шорты", href: "#!" },
-      { label: "шапки и кепки", href: "#!" },
-      { label: "аксессуары", href: "#!" },
+      { label: "головные уборы", href: "#!" },
+      { label: "нижнее белье", href: "#!" },
+      { label: "шарфы", href: "#!" },
+      { label: "сеты", href: "#!" },
       { label: "новинки", href: "#!" },
-      { label: "распродажа", href: "#!" },
     ],
   },
   {
@@ -27,17 +25,6 @@ export const FOOTER_COLUMNS = [
       { label: "доставка", href: "#!" },
       { label: "возврат и обмен", href: "#!" },
       { label: "размерная сетка", href: "#!" },
-      { label: "уход за вещами", href: "#!" },
-      { label: "статус заказа", href: "#!" },
-    ],
-  },
-  {
-    title: "сервис",
-    links: [
-      { label: "подарочные карты", href: "#!" },
-      { label: "реферальная программа", href: "#!" },
-      { label: "кэшбек", href: "#!" },
-      { label: "трек-номер посылки", href: "#!" },
     ],
   },
   {
@@ -46,8 +33,6 @@ export const FOOTER_COLUMNS = [
       { label: "о нас", href: "#!" },
       { label: "димоны", href: "#!" },
       { label: "сотрудничество", href: "#!" },
-      { label: "опт", href: "#!" },
-      { label: "вакансии", href: "#!" },
     ],
   },
   {
@@ -79,7 +64,6 @@ export const FOOTER_PAYMENT_METHODS = [
 
 export const FOOTER_CARRIERS = [
   "сдэк",
-  "почта россии",
   "boxberry",
   "курьером по городу",
 ];
@@ -100,7 +84,7 @@ export const FOOTER_SOCIALS: {
 }[] = [
   {
     label: "telegram",
-    href: "https://t.me/dimony_chat",
+    href: "#!",
     icon: "telegram",
   },
   {

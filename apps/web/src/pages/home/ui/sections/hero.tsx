@@ -40,19 +40,23 @@ export function HeroSection() {
       const rect = spacerRef.current.getBoundingClientRect();
 
       startFontSize.current = parseFloat(getComputedStyle(spacerRef.current).fontSize);
-      start.current = { top: rect.top + rect.height / 2, left: rect.left + rect.width / 2 };
+      start.current = {
+        top: rect.top + window.scrollY + rect.height / 2,
+        left: rect.left + window.scrollX + rect.width / 2,
+      };
     };
 
     let ticking = false;
     const update = () => {
+      ticking = false;
+
       const header = headerRef.current;
       if (!flyingRef.current || !header) return;
 
       const progress = Math.min(Math.max(window.scrollY / SCROLL_DISTANCE, 0), 1);
       const ease = progress * (2 - progress);
 
-      const headerRect = header.getBoundingClientRect();
-      const targetTop = headerRect.top + headerRect.height / 2;
+      const targetTop = header.offsetHeight / 2;
       const targetLeft = window.innerWidth / 2;
 
       const top = start.current.top + (targetTop - start.current.top) * ease;
@@ -60,7 +64,7 @@ export function HeroSection() {
       const fontSize =
         startFontSize.current + (targetFontSize.current - startFontSize.current) * ease;
 
-      flyingRef.current.style.top = `${top}px`;
+      flyingRef.current.style.top = `${Math.max(top, targetTop)}px`;
       flyingRef.current.style.left = `${left}px`;
       flyingRef.current.style.fontSize = `${fontSize}px`;
 
@@ -68,14 +72,12 @@ export function HeroSection() {
         fadeRef.current.style.opacity = `${Math.max(1 - progress * 1.6, 0)}`;
         fadeRef.current.style.pointerEvents = progress > 0.4 ? "none" : "auto";
       }
-
-      ticking = false;
     };
 
     const onScroll = () => {
       if (!ticking) {
-        requestAnimationFrame(update);
         ticking = true;
+        requestAnimationFrame(update);
       }
     };
     const onResize = () => {
@@ -96,7 +98,7 @@ export function HeroSection() {
       window.removeEventListener("resize", onResize);
       isDesktop.removeEventListener("change", onResize);
     };
-  }, [headerRef, mounted]);
+  }, [mounted]);
 
   const flyingH1 = (
     <h1
@@ -108,7 +110,7 @@ export function HeroSection() {
   );
 
   return (
-    <section className="relative h-dvh w-full pt-20">
+    <section className="relative h-svh w-full pt-20">
       <div className="h-full w-full sticky top-0 flex items-center justify-center px-6">
         <div className="flex flex-col items-center gap-8 sm:gap-10 lg:gap-12">
           <div
