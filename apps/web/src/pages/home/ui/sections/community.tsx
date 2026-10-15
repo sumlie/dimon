@@ -17,37 +17,37 @@ export function Community({
   channelUrl = "https://t.me/dimonclo",
 }: CommunitySectionProps) {
   return (
-    <section className="w-full border-t-0 border-2 border-black bg-white">
-      <div className="grid grid-cols-1 divide-y-2 divide-black lg:grid-cols-[38%_1fr] sm:divide-x-2 lg:divide-y-0">
-        <div className="flex flex-col justify-center gap-2 px-5 py-10 sm:gap-3 sm:px-12 sm:py-24 max-sm:text-center max-sm:items-center">
+    <section className="w-full bg-white">
+      <div className="grid grid-cols-1 divide-y-2 divide-black lg:grid-cols-[40%_1fr] lg:divide-x-4 lg:divide-y-0">
+        <div className="flex flex-col justify-center gap-2 px-5 py-10 max-lg:items-center max-lg:text-center sm:gap-3 sm:px-8 sm:py-16 lg:px-10 lg:py-14 xl:py-19">
           <p className="font-sans text-base lowercase sm:text-2xl">с нами уже</p>
 
-          <p className="flex flex-wrap items-baseline gap-x-3 leading-none sm:gap-x-4">
-            <span
-              className="font-display font-extrabold tracking-tight text-red-600"
-              style={{ fontSize: "clamp(3rem, 15vw, 8rem)" }}
-            >
-              {formatCount(subscriberCount)}
-            </span>
-            <span
-              className="font-sans font-extrabold lowercase leading-[1.05] tracking-tight text-black"
-              style={{ fontSize: "clamp(1.5rem, 7vw, 3.5rem)" }}
-            >
-              димонов
-            </span>
+          <p
+            className="
+              flex flex-wrap items-baseline gap-x-[0.15em] font-display font-extrabold leading-none tracking-tight
+              max-lg:justify-center xl:flex-nowrap
+              text-[clamp(3.5rem,14vw,8rem)]
+              lg:text-[clamp(3rem,6.5vw,9rem)]
+            "
+          >
+            <span className="text-red-600">{formatCount(subscriberCount)}</span>
+            <span className="text-[0.7em] lowercase text-black">димонов</span>
           </p>
 
           <p className="font-sans text-sm lowercase text-neutral-400 sm:text-xl">
             цифра растет каждый день
           </p>
         </div>
-
-        <div className="flex flex-col justify-between max-sm:items-center gap-6 px-5 py-10 sm:gap-10 sm:px-12 sm:py-24">
+ 
+        <div className="flex flex-col justify-center gap-6 px-5 py-10 max-lg:items-center sm:gap-10 sm:px-8 sm:py-16 lg:px-10 lg:py-14 xl:py-19">
           <p
-            className="max-sm:text-center font-sans font-extrabold lowercase leading-[1.05] tracking-tight text-black"
-            style={{ fontSize: "clamp(1.75rem, 7vw, 3.5rem)" }}
+            className="
+              font-sans font-extrabold lowercase leading-[1.05] tracking-tight text-black max-lg:text-center
+              text-[clamp(2.5rem,7vw,3.5rem)]
+              lg:text-[clamp(2.5rem,3vw,3.5rem)]
+            "
           >
-            можешь остаться снаружи, но лучше войти в{" "}
+            можешь пройти мимо, но лучше вступить в{" "}
             <span className="text-red-600">наши ряды</span>.
           </p>
 
@@ -56,7 +56,7 @@ export function Community({
             target="_blank"
             rel="noopener noreferrer"
             fullWidthMobile
-            className="group flex items-center justify-center gap-1 w-fit"
+            className="group flex w-fit items-center justify-center gap-1"
           >
             <RiTelegram2Line size={20} />
             <span className="ml-1">в телеграм</span>
