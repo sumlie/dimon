@@ -1,0 +1,5 @@
+node_modules/
+dist/
+pnpm-workspace.yaml
+.env*
+tsconfig.build.tsbuildinfo
