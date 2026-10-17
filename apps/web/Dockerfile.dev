@@ -1,13 +1,7 @@
 FROM node:22-alpine
-
 RUN corepack enable
-
 WORKDIR /app
-
 COPY package.json pnpm-lock.yaml ./
-RUN pnpm i --frozen-lockfile
-
+RUN pnpm install --frozen-lockfile
 COPY . .
-
-EXPOSE 3000
-CMD ["pnpm", "dev"]
+CMD ["pnpm", "dev", "-H", "0.0.0.0"]
