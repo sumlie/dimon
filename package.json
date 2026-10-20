@@ -1,0 +1,10 @@
+{
+  "name": "dimon",
+  "private": true,
+  "scripts": {
+    "dev:web": "pnpm --filter web dev",
+    "dev:bot": "pnpm --filter bot start:dev",
+    "build:bot": "pnpm --filter bot build",
+    "start:bot": "pnpm --filter bot start:prod"
+  }
+}

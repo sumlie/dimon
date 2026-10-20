@@ -5,8 +5,11 @@ import { Manifesto } from "@/pages/home/ui/sections/manifesto";
 import { ScrollGallery } from "@/pages/home/ui/sections/scroll-gallery";
 import { Community } from "@/pages/home/ui/sections/community";
 import { Footer } from "@/widgets/footer/ui/footer";
+import { getSubscriberCount } from "../api";
 
-export function HomePage() {
+export async function HomePage() {
+  const subscriberCount = await getSubscriberCount();
+
   return (
     <>
       <Header />
@@ -15,7 +18,7 @@ export function HomePage() {
       <Manifesto />
       <FeaturedProducts title="новинки" />
       <ScrollGallery />
-      <Community subscriberCount={4300} />
+      <Community subscriberCount={subscriberCount} />
       <Footer />
     </>
   );
