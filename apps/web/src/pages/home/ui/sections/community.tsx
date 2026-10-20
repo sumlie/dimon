@@ -1,21 +1,18 @@
-// Community
 import { Button } from "@/shared/ui/button";
 import { ArrowRight } from "lucide-react";
 import { RiTelegram2Line } from "react-icons/ri";
 
 type CommunitySectionProps = {
-  subscriberCount: number;
+  subscriberCount: number | null;
   channelUrl?: string;
 };
 
-function formatCount(n: number) {
-  return new Intl.NumberFormat("ru-RU").format(n);
-}
-
-export function Community({
-  subscriberCount,
+export async function Community({
   channelUrl = "https://t.me/dimonclo",
+  subscriberCount,
 }: CommunitySectionProps) {
+  const hasCount = typeof subscriberCount === "number";
+
   return (
     <section className="w-full bg-white">
       <div className="grid grid-cols-1 divide-y-2 divide-black lg:grid-cols-[40%_1fr] lg:divide-x-4 lg:divide-y-0">
@@ -30,7 +27,9 @@ export function Community({
               lg:text-[clamp(3rem,6.5vw,9rem)]
             "
           >
-            <span className="text-red-600">{formatCount(subscriberCount)}</span>
+            <span className="text-red-600">
+              {hasCount ? (subscriberCount) : "5000+"}
+            </span>
             <span className="text-[0.7em] lowercase text-black">димонов</span>
           </p>
 
