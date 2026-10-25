@@ -7,12 +7,10 @@ export const Media: CollectionConfig = {
   access: {
     read: () => true,
   },
+  admin: {
+    group: 'Workspace',
+  },
   fields: [
-    {
-      name: 'alt',
-      type: 'text',
-      required: true,
-    },
     createFolderField({ relationTo: 'folders' }),
     createTagField({ relationTo: 'tags' }),
   ],
