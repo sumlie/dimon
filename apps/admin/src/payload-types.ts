@@ -75,26 +75,39 @@ export type LexicalNodes_3DE324E4 =
 
 export interface Config {
   auth: {
-    users: UserAuthOperations;
+    admins: AdminAuthOperations;
+    customers: CustomerAuthOperations;
   };
   blocks: {};
   collections: {
-    users: User;
+    admins: Admin;
     media: Media;
     folders: Folder;
     tags: Tag;
+    categories: Category;
+    products: Product;
+    orders: Order;
+    customers: Customer;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
     'payload-llm-instructions': PayloadLlmInstruction;
   };
-  collectionsJoins: {};
+  collectionsJoins: {
+    categories: {
+      products: 'products';
+    };
+  };
   collectionsSelect: {
-    users: UsersSelect<false> | UsersSelect<true>;
+    admins: AdminsSelect<false> | AdminsSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     folders: FoldersSelect<false> | FoldersSelect<true>;
     tags: TagsSelect<false> | TagsSelect<true>;
+    categories: CategoriesSelect<false> | CategoriesSelect<true>;
+    products: ProductsSelect<false> | ProductsSelect<true>;
+    orders: OrdersSelect<false> | OrdersSelect<true>;
+    customers: CustomersSelect<false> | CustomersSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -105,8 +118,14 @@ export interface Config {
     defaultIDType: number;
   };
   fallbackLocale: ('false' | 'none' | 'null') | false | null | 'en' | 'en'[];
-  globals: {};
-  globalsSelect: {};
+  globals: {
+    'social-links': SocialLink;
+    'legal-settings': LegalSetting;
+  };
+  globalsSelect: {
+    'social-links': SocialLinksSelect<false> | SocialLinksSelect<true>;
+    'legal-settings': LegalSettingsSelect<false> | LegalSettingsSelect<true>;
+  };
   locale: 'en';
   widgets: {
     welcome: WelcomeWidget;
@@ -115,13 +134,31 @@ export interface Config {
     activity: ActivityWidget;
     'upload-dropzone': UploadDropzoneWidget;
   };
-  user: User;
+  user: Admin | Customer;
   jobs: {
     tasks: unknown;
     workflows: unknown;
   };
 }
-export interface UserAuthOperations {
+export interface AdminAuthOperations {
+  forgotPassword: {
+    email: string;
+    password: string;
+  };
+  login: {
+    email: string;
+    password: string;
+  };
+  registerFirstUser: {
+    email: string;
+    password: string;
+  };
+  unlock: {
+    email: string;
+    password: string;
+  };
+}
+export interface CustomerAuthOperations {
   forgotPassword: {
     email: string;
     password: string;
@@ -141,18 +178,28 @@ export interface UserAuthOperations {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "users".
+ * via the `definition` "admins".
  */
-export interface User {
+export interface Admin {
   id: number;
-  createdBy?: {
-    relationTo: 'users';
-    value: number | User;
-  } | null;
-  updatedBy?: {
-    relationTo: 'users';
-    value: number | User;
-  } | null;
+  createdBy?:
+    | ({
+        relationTo: 'admins';
+        value: number | Admin;
+      } | null)
+    | ({
+        relationTo: 'customers';
+        value: number | Customer;
+      } | null);
+  updatedBy?:
+    | ({
+        relationTo: 'admins';
+        value: number | Admin;
+      } | null)
+    | ({
+        relationTo: 'customers';
+        value: number | Customer;
+      } | null);
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -171,7 +218,79 @@ export interface User {
       }[]
     | null;
   password?: string | null;
-  collection: 'users';
+  collection: 'admins';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "customers".
+ */
+export interface Customer {
+  id: number;
+  name: string;
+  phone?: string | null;
+  addresses?:
+    | {
+        /**
+         * Например: Дом, Работа
+         */
+        label?: string | null;
+        recipientName?: string | null;
+        recipientPhone?: string | null;
+        deliveryMethod?: string | null;
+        address: string;
+        isDefault?: boolean | null;
+        id?: string | null;
+      }[]
+    | null;
+  defaultPaymentMethod?: string | null;
+  accounts?:
+    | {
+        provider: 'google' | 'telegram' | 'vk' | 'yandex';
+        providerId: string;
+        id?: string | null;
+      }[]
+    | null;
+  isBlocked?: boolean | null;
+  consentAt?: string | null;
+  createdBy?:
+    | ({
+        relationTo: 'admins';
+        value: number | Admin;
+      } | null)
+    | ({
+        relationTo: 'customers';
+        value: number | Customer;
+      } | null);
+  updatedBy?:
+    | ({
+        relationTo: 'admins';
+        value: number | Admin;
+      } | null)
+    | ({
+        relationTo: 'customers';
+        value: number | Customer;
+      } | null);
+  updatedAt: string;
+  createdAt: string;
+  email: string;
+  resetPasswordToken?: string | null;
+  resetPasswordExpiration?: string | null;
+  salt?: string | null;
+  hash?: string | null;
+  resetPasswordRequestedAt?: string | null;
+  _verified?: boolean | null;
+  _verificationToken?: string | null;
+  loginAttempts?: number | null;
+  lockUntil?: string | null;
+  sessions?:
+    | {
+        id: string;
+        createdAt?: string | null;
+        expiresAt: string;
+      }[]
+    | null;
+  password?: string | null;
+  collection: 'customers';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -179,17 +298,26 @@ export interface User {
  */
 export interface Media {
   id: number;
-  alt: string;
   _h_folders?: (number | null) | Folder;
   _h_tags?: (number | Tag)[] | null;
-  createdBy?: {
-    relationTo: 'users';
-    value: number | User;
-  } | null;
-  updatedBy?: {
-    relationTo: 'users';
-    value: number | User;
-  } | null;
+  createdBy?:
+    | ({
+        relationTo: 'admins';
+        value: number | Admin;
+      } | null)
+    | ({
+        relationTo: 'customers';
+        value: number | Customer;
+      } | null);
+  updatedBy?:
+    | ({
+        relationTo: 'admins';
+        value: number | Admin;
+      } | null)
+    | ({
+        relationTo: 'customers';
+        value: number | Customer;
+      } | null);
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -220,14 +348,24 @@ export interface Folder {
   id: number;
   _h_folders?: (number | null) | Folder;
   name: string;
-  createdBy?: {
-    relationTo: 'users';
-    value: number | User;
-  } | null;
-  updatedBy?: {
-    relationTo: 'users';
-    value: number | User;
-  } | null;
+  createdBy?:
+    | ({
+        relationTo: 'admins';
+        value: number | Admin;
+      } | null)
+    | ({
+        relationTo: 'customers';
+        value: number | Customer;
+      } | null);
+  updatedBy?:
+    | ({
+        relationTo: 'admins';
+        value: number | Admin;
+      } | null)
+    | ({
+        relationTo: 'customers';
+        value: number | Customer;
+      } | null);
   updatedAt: string;
   createdAt: string;
   _h_slugPath?: string | null;
@@ -241,18 +379,149 @@ export interface Tag {
   id: number;
   _h_tags?: (number | null) | Tag;
   name: string;
-  createdBy?: {
-    relationTo: 'users';
-    value: number | User;
-  } | null;
-  updatedBy?: {
-    relationTo: 'users';
-    value: number | User;
-  } | null;
+  createdBy?:
+    | ({
+        relationTo: 'admins';
+        value: number | Admin;
+      } | null)
+    | ({
+        relationTo: 'customers';
+        value: number | Customer;
+      } | null);
+  updatedBy?:
+    | ({
+        relationTo: 'admins';
+        value: number | Admin;
+      } | null)
+    | ({
+        relationTo: 'customers';
+        value: number | Customer;
+      } | null);
   updatedAt: string;
   createdAt: string;
   _h_slugPath?: string | null;
   _h_titlePath?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "categories".
+ */
+export interface Category {
+  id: number;
+  title: string;
+  products?: {
+    docs?: (number | Product)[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
+  createdBy?:
+    | ({
+        relationTo: 'admins';
+        value: number | Admin;
+      } | null)
+    | ({
+        relationTo: 'customers';
+        value: number | Customer;
+      } | null);
+  updatedBy?:
+    | ({
+        relationTo: 'admins';
+        value: number | Admin;
+      } | null)
+    | ({
+        relationTo: 'customers';
+        value: number | Customer;
+      } | null);
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "products".
+ */
+export interface Product {
+  id: number;
+  title: string;
+  slug: string;
+  photos: (number | Media)[];
+  category: number | Category;
+  description?: string | null;
+  priceRub: number;
+  priceByn: number;
+  stock: number;
+  tags?:
+    | {
+        tag: string;
+        id?: string | null;
+      }[]
+    | null;
+  featured?: boolean | null;
+  status: 'draft' | 'published';
+  createdBy?:
+    | ({
+        relationTo: 'admins';
+        value: number | Admin;
+      } | null)
+    | ({
+        relationTo: 'customers';
+        value: number | Customer;
+      } | null);
+  updatedBy?:
+    | ({
+        relationTo: 'admins';
+        value: number | Admin;
+      } | null)
+    | ({
+        relationTo: 'customers';
+        value: number | Customer;
+      } | null);
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "orders".
+ */
+export interface Order {
+  id: number;
+  items: {
+    product: number | Product;
+    quantity: number;
+    unitPrice: number;
+    id?: string | null;
+  }[];
+  total: number;
+  status: 'new' | 'processing' | 'shipped' | 'completed' | 'cancelled';
+  customer?: (number | null) | Customer;
+  customerName: string;
+  username: string;
+  email: string;
+  phone?: string | null;
+  deliveryMethod?: string | null;
+  deliveryAddress?: string | null;
+  paymentMethod?: string | null;
+  paymentStatus: 'pending' | 'paid' | 'failed' | 'refunded';
+  comment?: string | null;
+  createdBy?:
+    | ({
+        relationTo: 'admins';
+        value: number | Admin;
+      } | null)
+    | ({
+        relationTo: 'customers';
+        value: number | Customer;
+      } | null);
+  updatedBy?:
+    | ({
+        relationTo: 'admins';
+        value: number | Admin;
+      } | null)
+    | ({
+        relationTo: 'customers';
+        value: number | Customer;
+      } | null);
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -279,8 +548,8 @@ export interface PayloadLockedDocument {
   id: number;
   document?:
     | ({
-        relationTo: 'users';
-        value: number | User;
+        relationTo: 'admins';
+        value: number | Admin;
       } | null)
     | ({
         relationTo: 'media';
@@ -293,12 +562,33 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'tags';
         value: number | Tag;
+      } | null)
+    | ({
+        relationTo: 'categories';
+        value: number | Category;
+      } | null)
+    | ({
+        relationTo: 'products';
+        value: number | Product;
+      } | null)
+    | ({
+        relationTo: 'orders';
+        value: number | Order;
+      } | null)
+    | ({
+        relationTo: 'customers';
+        value: number | Customer;
       } | null);
   globalSlug?: string | null;
-  user: {
-    relationTo: 'users';
-    value: number | User;
-  };
+  user:
+    | {
+        relationTo: 'admins';
+        value: number | Admin;
+      }
+    | {
+        relationTo: 'customers';
+        value: number | Customer;
+      };
   updatedAt: string;
   createdAt: string;
 }
@@ -308,10 +598,15 @@ export interface PayloadLockedDocument {
  */
 export interface PayloadPreference {
   id: number;
-  user: {
-    relationTo: 'users';
-    value: number | User;
-  };
+  user:
+    | {
+        relationTo: 'admins';
+        value: number | Admin;
+      }
+    | {
+        relationTo: 'customers';
+        value: number | Customer;
+      };
   key?: string | null;
   value?:
     | {
@@ -347,22 +642,32 @@ export interface PayloadLlmInstruction {
   entityType: 'collection' | 'global';
   additionalInstructions?: LexicalRichText<LexicalNodes_3DE324E4> | null;
   systemInstructions?: LexicalRichText<LexicalNodes_3DE324E4> | null;
-  createdBy?: {
-    relationTo: 'users';
-    value: number | User;
-  } | null;
-  updatedBy?: {
-    relationTo: 'users';
-    value: number | User;
-  } | null;
+  createdBy?:
+    | ({
+        relationTo: 'admins';
+        value: number | Admin;
+      } | null)
+    | ({
+        relationTo: 'customers';
+        value: number | Customer;
+      } | null);
+  updatedBy?:
+    | ({
+        relationTo: 'admins';
+        value: number | Admin;
+      } | null)
+    | ({
+        relationTo: 'customers';
+        value: number | Customer;
+      } | null);
   updatedAt: string;
   createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "users_select".
+ * via the `definition` "admins_select".
  */
-export interface UsersSelect<T extends boolean = true> {
+export interface AdminsSelect<T extends boolean = true> {
   createdBy?: T;
   updatedBy?: T;
   updatedAt?: T;
@@ -388,7 +693,6 @@ export interface UsersSelect<T extends boolean = true> {
  * via the `definition` "media_select".
  */
 export interface MediaSelect<T extends boolean = true> {
-  alt?: T;
   _h_folders?: T;
   _h_tags?: T;
   createdBy?: T;
@@ -444,6 +748,124 @@ export interface TagsSelect<T extends boolean = true> {
   createdAt?: T;
   _h_slugPath?: T;
   _h_titlePath?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "categories_select".
+ */
+export interface CategoriesSelect<T extends boolean = true> {
+  title?: T;
+  products?: T;
+  createdBy?: T;
+  updatedBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "products_select".
+ */
+export interface ProductsSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  photos?: T;
+  category?: T;
+  description?: T;
+  priceRub?: T;
+  priceByn?: T;
+  stock?: T;
+  tags?:
+    | T
+    | {
+        tag?: T;
+        id?: T;
+      };
+  featured?: T;
+  status?: T;
+  createdBy?: T;
+  updatedBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "orders_select".
+ */
+export interface OrdersSelect<T extends boolean = true> {
+  items?:
+    | T
+    | {
+        product?: T;
+        quantity?: T;
+        unitPrice?: T;
+        id?: T;
+      };
+  total?: T;
+  status?: T;
+  customer?: T;
+  customerName?: T;
+  username?: T;
+  email?: T;
+  phone?: T;
+  deliveryMethod?: T;
+  deliveryAddress?: T;
+  paymentMethod?: T;
+  paymentStatus?: T;
+  comment?: T;
+  createdBy?: T;
+  updatedBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "customers_select".
+ */
+export interface CustomersSelect<T extends boolean = true> {
+  name?: T;
+  phone?: T;
+  addresses?:
+    | T
+    | {
+        label?: T;
+        recipientName?: T;
+        recipientPhone?: T;
+        deliveryMethod?: T;
+        address?: T;
+        isDefault?: T;
+        id?: T;
+      };
+  defaultPaymentMethod?: T;
+  accounts?:
+    | T
+    | {
+        provider?: T;
+        providerId?: T;
+        id?: T;
+      };
+  isBlocked?: T;
+  consentAt?: T;
+  createdBy?: T;
+  updatedBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  email?: T;
+  resetPasswordToken?: T;
+  resetPasswordExpiration?: T;
+  salt?: T;
+  hash?: T;
+  resetPasswordRequestedAt?: T;
+  _verified?: T;
+  _verificationToken?: T;
+  loginAttempts?: T;
+  lockUntil?: T;
+  sessions?:
+    | T
+    | {
+        id?: T;
+        createdAt?: T;
+        expiresAt?: T;
+      };
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -503,6 +925,96 @@ export interface PayloadLlmInstructionsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "social-links".
+ */
+export interface SocialLink {
+  id: number;
+  telegram: string;
+  tiktok: string;
+  instagram: string;
+  createdBy?:
+    | ({
+        relationTo: 'admins';
+        value: number | Admin;
+      } | null)
+    | ({
+        relationTo: 'customers';
+        value: number | Customer;
+      } | null);
+  updatedBy?:
+    | ({
+        relationTo: 'admins';
+        value: number | Admin;
+      } | null)
+    | ({
+        relationTo: 'customers';
+        value: number | Customer;
+      } | null);
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "legal-settings".
+ */
+export interface LegalSetting {
+  id: number;
+  brandName: string;
+  entrepreneurName: string;
+  inn: string;
+  ogrnip: string;
+  createdBy?:
+    | ({
+        relationTo: 'admins';
+        value: number | Admin;
+      } | null)
+    | ({
+        relationTo: 'customers';
+        value: number | Customer;
+      } | null);
+  updatedBy?:
+    | ({
+        relationTo: 'admins';
+        value: number | Admin;
+      } | null)
+    | ({
+        relationTo: 'customers';
+        value: number | Customer;
+      } | null);
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "social-links_select".
+ */
+export interface SocialLinksSelect<T extends boolean = true> {
+  telegram?: T;
+  tiktok?: T;
+  instagram?: T;
+  createdBy?: T;
+  updatedBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "legal-settings_select".
+ */
+export interface LegalSettingsSelect<T extends boolean = true> {
+  brandName?: T;
+  entrepreneurName?: T;
+  inn?: T;
+  ogrnip?: T;
+  createdBy?: T;
+  updatedBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "welcome_widget".
  */
 export interface WelcomeWidget {
@@ -528,7 +1040,7 @@ export interface CollectionsWidget {
 export interface CollectionQueryWidget {
   data?: {
     title?: string | null;
-    relatedCollection: 'users' | 'media' | 'folders' | 'tags';
+    relatedCollection: 'admins' | 'media' | 'folders' | 'tags' | 'categories' | 'products' | 'orders' | 'customers';
     where?:
       | {
           [k: string]: unknown;
@@ -550,7 +1062,8 @@ export interface CollectionQueryWidget {
  */
 export interface ActivityWidget {
   data?: {
-    excludedCollections?: ('users' | 'media' | 'folders' | 'tags')[] | null;
+    excludedCollections?:
+      ('admins' | 'media' | 'folders' | 'tags' | 'categories' | 'products' | 'orders' | 'customers')[] | null;
   };
   width: 'small' | 'medium' | 'large' | 'x-large' | 'full';
 }
