@@ -15,12 +15,19 @@ export function Footer() {
         <div className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3 sm:gap-x-8 sm:gap-y-12 lg:grid-cols-4 xl:grid-cols-5">
           {FOOTER_COLUMNS.map((column) => (
             <div key={column.title}>
-              <p className="font-sans text-sm lowercase text-white/40">{column.title}</p>
+              <p className="font-sans text-sm lowercase text-white/40">
+                {column.title}
+              </p>
 
               <ul className="mt-4 flex flex-col gap-3 lowercase">
                 {column.links.map((link) => (
                   <li key={link.label}>
-                    <Button href={link.href} variant="textInvert" pd="none" className="break-words">
+                    <Button
+                      href={link.href}
+                      variant="textInvert"
+                      pd="none"
+                      className="break-words"
+                    >
                       {link.label}
                     </Button>
                   </li>
@@ -32,7 +39,9 @@ export function Footer() {
 
         <div className="mt-12 grid grid-cols-1 gap-6 border-t border-white/15 pt-8 sm:mt-16 sm:grid-cols-2 sm:gap-8 sm:pt-10 lg:grid-cols-4">
           <div>
-            <p className="font-sans text-sm lowercase text-white/40">контакты</p>
+            <p className="font-sans text-sm lowercase text-white/40">
+              контакты
+            </p>
 
             <div className="mt-4 flex flex-col gap-2 lowercase">
               <Button
@@ -53,7 +62,9 @@ export function Footer() {
           </div>
 
           <div>
-            <p className="font-sans text-sm lowercase text-white/40">социальные сети</p>
+            <p className="font-sans text-sm lowercase text-white/40">
+              социальные сети
+            </p>
 
             <div className="mt-4 flex gap-4">
               {FOOTER_SOCIALS.map((social) => {
@@ -77,7 +88,9 @@ export function Footer() {
           </div>
 
           <div>
-            <p className="font-sans text-sm lowercase text-white/40">способы оплаты</p>
+            <p className="font-sans text-sm lowercase text-white/40">
+              способы оплаты
+            </p>
 
             <div className="mt-4 flex flex-wrap gap-2 font-mono text-xs lowercase text-white/60">
               {FOOTER_PAYMENT_METHODS.map((method) => (
@@ -89,11 +102,16 @@ export function Footer() {
           </div>
 
           <div>
-            <p className="font-sans text-sm lowercase text-white/40">работаем с</p>
+            <p className="font-sans text-sm lowercase text-white/40">
+              работаем с
+            </p>
 
             <div className="mt-4 flex flex-wrap gap-2 font-mono text-xs lowercase text-white/60">
               {FOOTER_CARRIERS.map((carrier) => (
-                <span key={carrier} className="border border-white/20 px-2 py-1">
+                <span
+                  key={carrier}
+                  className="border border-white/20 px-2 py-1"
+                >
                   {carrier}
                 </span>
               ))}

@@ -1,8 +1,8 @@
 "use client";
 
+import { ArrowRight, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { ArrowRight, X } from "lucide-react";
 import { RiTelegram2Line } from "react-icons/ri";
 import { Button } from "@/shared/ui/button";
 import { Dimon } from "@/shared/ui/dimon";
@@ -23,7 +23,13 @@ export function MobileMenu({ onClose }: MobileMenuProps) {
       </div>
 
       <div className="relative z-10 flex shrink-0 items-center justify-start -ml-2 -pt-1 px-6 py-4 sm:px-8">
-        <Button variant="icon" size="icon" pd="none" onClick={onClose} aria-label="закрыть меню">
+        <Button
+          variant="icon"
+          size="icon"
+          pd="none"
+          onClick={onClose}
+          aria-label="закрыть меню"
+        >
           <X size={24} strokeWidth={1.75} />
         </Button>
       </div>
@@ -52,7 +58,12 @@ export function MobileMenu({ onClose }: MobileMenuProps) {
       </nav>
 
       <div className="relative z-10 shrink-0 border-t-2 border-black px-6 py-6 sm:px-8">
-        <Button href="#!" pd="lg" onClick={onClose} className="w-full justify-center gap-2">
+        <Button
+          href="#!"
+          pd="lg"
+          onClick={onClose}
+          className="w-full justify-center gap-2"
+        >
           <RiTelegram2Line size={20} />
           димоны
           <ArrowRight

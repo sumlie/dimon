@@ -1,8 +1,4 @@
-import {
-  RiInstagramLine,
-  RiTelegram2Line,
-  RiTiktokFill,
-} from "react-icons/ri";
+import { RiInstagramLine, RiTelegram2Line, RiTiktokFill } from "react-icons/ri";
 
 export const FOOTER_COLUMNS = [
   {
@@ -55,19 +51,9 @@ export const FOOTER_COLUMNS = [
   },
 ];
 
-export const FOOTER_PAYMENT_METHODS = [
-  "visa",
-  "mastercard",
-  "мир",
-  "сбп",
-];
+export const FOOTER_PAYMENT_METHODS = ["visa", "mastercard", "мир", "сбп"];
 
-export const FOOTER_CARRIERS = [
-  "сдэк",
-  "boxberry",
-  "курьером по городу",
-];
-
+export const FOOTER_CARRIERS = ["сдэк", "boxberry", "курьером по городу"];
 
 export const SOCIAL_ICONS = {
   telegram: RiTelegram2Line,

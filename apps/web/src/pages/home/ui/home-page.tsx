@@ -1,10 +1,10 @@
-import { HeroSection } from "@/pages/home/ui/sections/hero";
-import { Header } from "@/widgets/header";
+import { Community } from "@/pages/home/ui/sections/community";
 import { FeaturedProducts } from "@/pages/home/ui/sections/featured-products";
+import { HeroSection } from "@/pages/home/ui/sections/hero";
 import { Manifesto } from "@/pages/home/ui/sections/manifesto";
 import { ScrollGallery } from "@/pages/home/ui/sections/scroll-gallery";
-import { Community } from "@/pages/home/ui/sections/community";
 import { Footer } from "@/widgets/footer/ui/footer";
+import { Header } from "@/widgets/header";
 import { getSubscriberCount } from "../api";
 
 export async function HomePage() {

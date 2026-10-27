@@ -21,7 +21,8 @@ export function Manifesto() {
         <span className="mt-[0.2em] block text-center sm:mt-[0.1em] sm:text-right">
           мы просто <br className="sm:hidden" /> делаем{" "}
           <span className="whitespace-nowrap font-display tracking-[0.01em] text-red-600 max-sm:leading-normal">
-            <Dimon />ОВ
+            <Dimon />
+            ОВ
           </span>
         </span>
       </p>

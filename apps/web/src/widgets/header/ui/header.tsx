@@ -1,15 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Menu } from "lucide-react";
+import { useEffect, useState } from "react";
 import { RiTelegram2Line } from "react-icons/ri";
-import { Button } from "@/shared/ui/button";
 import { LoginButton } from "@/features/auth";
 import { CartButton } from "@/features/cart";
+import { cn } from "@/shared/lib/cn";
 import { headerRef } from "@/shared/lib/refs";
+import { Button } from "@/shared/ui/button";
 import { NAV_LINKS } from "../config/links";
 import { MobileMenu } from "./mobile-menu";
-import { cn } from "@/shared/lib/cn";
 
 const MOBILE_BREAKPOINT = "(min-width: 1024px)";
 
@@ -78,7 +78,13 @@ export function Header() {
       </Button>
 
       <nav className="flex items-start gap-4 font-sans lg:gap-8">
-        <Button href="#!" variant="social" size="mini" pd="none" className="hidden lg:flex">
+        <Button
+          href="#!"
+          variant="social"
+          size="mini"
+          pd="none"
+          className="hidden lg:flex"
+        >
           <span className="flex h-7 w-7 items-center justify-center">
             <RiTelegram2Line size={26} />
           </span>

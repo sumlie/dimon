@@ -1,5 +1,5 @@
-import { Button } from "@/shared/ui/button/button";
 import { ShoppingBag } from "lucide-react";
+import { Button } from "@/shared/ui/button/button";
 
 export function CartButton() {
   const count = 0;

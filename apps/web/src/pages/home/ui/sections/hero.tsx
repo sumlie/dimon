@@ -1,10 +1,10 @@
 "use client";
 
-import { Button } from "@/shared/ui/button";
 import { ArrowRight } from "lucide-react";
 import { useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { headerRef } from "@/shared/lib/refs";
+import { Button } from "@/shared/ui/button";
 import { Dimon } from "@/shared/ui/dimon";
 
 export const SCROLL_DISTANCE = 450;
@@ -39,7 +39,9 @@ export function HeroSection() {
       if (!spacerRef.current) return;
       const rect = spacerRef.current.getBoundingClientRect();
 
-      startFontSize.current = parseFloat(getComputedStyle(spacerRef.current).fontSize);
+      startFontSize.current = parseFloat(
+        getComputedStyle(spacerRef.current).fontSize,
+      );
       start.current = {
         top: rect.top + window.scrollY + rect.height / 2,
         left: rect.left + window.scrollX + rect.width / 2,
@@ -53,16 +55,21 @@ export function HeroSection() {
       const header = headerRef.current;
       if (!flyingRef.current || !header) return;
 
-      const progress = Math.min(Math.max(window.scrollY / SCROLL_DISTANCE, 0), 1);
+      const progress = Math.min(
+        Math.max(window.scrollY / SCROLL_DISTANCE, 0),
+        1,
+      );
       const ease = progress * (2 - progress);
 
       const targetTop = header.offsetHeight / 2;
       const targetLeft = window.innerWidth / 2;
 
       const top = start.current.top + (targetTop - start.current.top) * ease;
-      const left = start.current.left + (targetLeft - start.current.left) * ease;
+      const left =
+        start.current.left + (targetLeft - start.current.left) * ease;
       const fontSize =
-        startFontSize.current + (targetFontSize.current - startFontSize.current) * ease;
+        startFontSize.current +
+        (targetFontSize.current - startFontSize.current) * ease;
 
       flyingRef.current.style.top = `${Math.max(top, targetTop)}px`;
       flyingRef.current.style.left = `${left}px`;
@@ -122,10 +129,13 @@ export function HeroSection() {
             <Dimon />
           </div>
 
-          <div ref={fadeRef} className="flex flex-col items-center gap-8 sm:gap-10 lg:gap-12">
+          <div
+            ref={fadeRef}
+            className="flex flex-col items-center gap-8 sm:gap-10 lg:gap-12"
+          >
             <p className="w-[90%] text-center font-sans text-base sm:w-[75%] sm:text-lg lg:w-[60%] lg:text-xl">
-              одежда без рамок и единой идеи. просто создаём то, что нравится нам и вам, и
-              распространяем ДИМОНа дальше.
+              одежда без рамок и единой идеи. просто создаём то, что нравится
+              нам и вам, и распространяем ДИМОНа дальше.
             </p>
 
             <Button href="#!" pd="lg">

@@ -1,7 +1,7 @@
 import { ArrowRight } from "lucide-react";
-import { Button } from "@/shared/ui/button";
-import { Product } from "@/entities/product/ui/product";
 import { PRODUCTS } from "@/entities/product";
+import { Product } from "@/entities/product/ui/product";
+import { Button } from "@/shared/ui/button";
 
 type FeaturedProductsProps = {
   title?: string;

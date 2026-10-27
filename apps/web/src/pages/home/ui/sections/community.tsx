@@ -1,6 +1,6 @@
-import { Button } from "@/shared/ui/button";
 import { ArrowRight } from "lucide-react";
 import { RiTelegram2Line } from "react-icons/ri";
+import { Button } from "@/shared/ui/button";
 
 type CommunitySectionProps = {
   subscriberCount: number | null;
@@ -17,7 +17,9 @@ export async function Community({
     <section className="w-full bg-white">
       <div className="grid grid-cols-1 divide-y-2 divide-black lg:grid-cols-[40%_1fr] lg:divide-x-4 lg:divide-y-0">
         <div className="flex flex-col justify-center gap-2 px-5 py-10 max-lg:items-center max-lg:text-center sm:gap-3 sm:px-8 sm:py-16 lg:px-10 lg:py-14 xl:py-19">
-          <p className="font-sans text-base lowercase sm:text-2xl">с нами уже</p>
+          <p className="font-sans text-base lowercase sm:text-2xl">
+            с нами уже
+          </p>
 
           <p
             className="
@@ -28,7 +30,7 @@ export async function Community({
             "
           >
             <span className="text-red-600">
-              {hasCount ? (subscriberCount) : "5000+"}
+              {hasCount ? subscriberCount : "5000+"}
             </span>
             <span className="text-[0.7em] lowercase text-black">димонов</span>
           </p>
@@ -37,7 +39,7 @@ export async function Community({
             цифра растет каждый день
           </p>
         </div>
- 
+
         <div className="flex flex-col justify-center gap-6 px-5 py-10 max-lg:items-center sm:gap-10 sm:px-8 sm:py-16 lg:px-10 lg:py-14 xl:py-19">
           <p
             className="
