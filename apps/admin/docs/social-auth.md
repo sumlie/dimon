@@ -36,7 +36,7 @@ TELEGRAM_BOT_USERNAME=...
 TELEGRAM_AUTH_MAX_AGE=300
 ```
 
-Set `ADMIN_API_URL` in `apps/web` to the admin origin. `COOKIE_DOMAIN` must be the shared parent domain so the session cookie is sent by the storefront.
+Set `ADMIN_API_URL` in `apps/web` to the admin origin. Set `COOKIE_DOMAIN` to the shared parent domain when the storefront and admin run on different subdomains; with the storefront proxy, a host-only cookie can also work.
 
 ## Google Cloud setup
 
