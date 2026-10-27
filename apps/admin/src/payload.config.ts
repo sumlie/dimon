@@ -6,17 +6,16 @@ import path from 'path'
 import { buildConfig } from 'payload'
 import { fileURLToPath } from 'url'
 
-import { Admins } from './collections/Users'
-import { Media } from './collections/Media'
-import { Folders } from './collections/Folders'
-import { Tags } from './collections/Tags'
-import { Categories } from './collections/Categories'
-import { Products } from './collections/Products'
-import { Orders } from './collections/Orders'
-import { Customers } from './collections/Customers'
+import { Admins } from './modules/users'
+import { Media } from './modules/media'
+import { Folders } from './modules/folders'
+import { Tags } from './modules/tags'
+import { Categories } from './modules/categories'
+import { Products } from './modules/products'
+import { Orders } from './modules/orders'
+import { Customers } from './modules/customers'
 
-import { SocialLinks } from './globals/SocialLinks'
-import { OwnerInfo } from './globals/LegalSettings'
+import { OwnerInfo, SocialLinks } from './modules/settings'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -33,7 +32,7 @@ export default buildConfig({
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {
-    outputFile: path.resolve(dirname, 'payload-types.ts'),
+    outputFile: path.resolve(dirname, 'payloadTypes.ts'),
   },
   db: postgresAdapter({
     pool: {
