@@ -13,7 +13,7 @@ import { Tags } from './modules/tags'
 import { Categories } from './modules/categories'
 import { Products } from './modules/products'
 import { Orders } from './modules/orders'
-import { Customers } from './modules/customers'
+import { Customers, CustomerIdentities } from './modules/customers'
 
 import { OwnerInfo, SocialLinks } from './modules/settings'
 
@@ -28,7 +28,17 @@ export default buildConfig({
     },
   },
   globals: [SocialLinks, OwnerInfo],
-  collections: [Admins, Media, Folders, Tags, Categories, Products, Orders, Customers],
+  collections: [
+    Admins,
+    Media,
+    Folders,
+    Tags,
+    Categories,
+    Products,
+    Orders,
+    Customers,
+    CustomerIdentities,
+  ],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {
@@ -38,6 +48,7 @@ export default buildConfig({
     pool: {
       connectionString: process.env.DATABASE_URL || '',
     },
+    migrationDir: path.resolve(dirname, 'migrations'),
   }),
   localization: {
     locales: [{ code: 'en', label: 'English' }],

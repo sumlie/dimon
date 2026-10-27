@@ -88,6 +88,7 @@ export interface Config {
     products: Product;
     orders: Order;
     customers: Customer;
+    'customer-identities': CustomerIdentity;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -108,6 +109,7 @@ export interface Config {
     products: ProductsSelect<false> | ProductsSelect<true>;
     orders: OrdersSelect<false> | OrdersSelect<true>;
     customers: CustomersSelect<false> | CustomersSelect<true>;
+    'customer-identities': CustomerIdentitiesSelect<false> | CustomerIdentitiesSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -243,6 +245,9 @@ export interface Customer {
       }[]
     | null;
   defaultPaymentMethod?: string | null;
+  /**
+   * Данные перенесены в коллекцию customer-identities.
+   */
   accounts?:
     | {
         provider: 'google' | 'telegram' | 'vk' | 'yandex';
@@ -250,6 +255,9 @@ export interface Customer {
         id?: string | null;
       }[]
     | null;
+  emailVerifiedAt?: string | null;
+  socialOnly?: boolean | null;
+  registrationCompletedAt?: string | null;
   isBlocked?: boolean | null;
   consentAt?: string | null;
   createdBy?:
@@ -524,6 +532,42 @@ export interface Order {
   createdAt: string;
 }
 /**
+ * External login providers linked to customers. Managed by the auth API.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "customer-identities".
+ */
+export interface CustomerIdentity {
+  id: number;
+  customer: number | Customer;
+  provider: 'google' | 'yandex' | 'telegram' | 'vk';
+  providerId: string;
+  email?: string | null;
+  emailVerified?: boolean | null;
+  linkedAt?: string | null;
+  lastLoginAt?: string | null;
+  createdBy?:
+    | ({
+        relationTo: 'admins';
+        value: number | Admin;
+      } | null)
+    | ({
+        relationTo: 'customers';
+        value: number | Customer;
+      } | null);
+  updatedBy?:
+    | ({
+        relationTo: 'admins';
+        value: number | Admin;
+      } | null)
+    | ({
+        relationTo: 'customers';
+        value: number | Customer;
+      } | null);
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
@@ -578,6 +622,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'customers';
         value: number | Customer;
+      } | null)
+    | ({
+        relationTo: 'customer-identities';
+        value: number | CustomerIdentity;
       } | null);
   globalSlug?: string | null;
   user:
@@ -843,6 +891,9 @@ export interface CustomersSelect<T extends boolean = true> {
         providerId?: T;
         id?: T;
       };
+  emailVerifiedAt?: T;
+  socialOnly?: T;
+  registrationCompletedAt?: T;
   isBlocked?: T;
   consentAt?: T;
   createdBy?: T;
@@ -866,6 +917,23 @@ export interface CustomersSelect<T extends boolean = true> {
         createdAt?: T;
         expiresAt?: T;
       };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "customer-identities_select".
+ */
+export interface CustomerIdentitiesSelect<T extends boolean = true> {
+  customer?: T;
+  provider?: T;
+  providerId?: T;
+  email?: T;
+  emailVerified?: T;
+  linkedAt?: T;
+  lastLoginAt?: T;
+  createdBy?: T;
+  updatedBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1040,7 +1108,16 @@ export interface CollectionsWidget {
 export interface CollectionQueryWidget {
   data?: {
     title?: string | null;
-    relatedCollection: 'admins' | 'media' | 'folders' | 'tags' | 'categories' | 'products' | 'orders' | 'customers';
+    relatedCollection:
+      | 'admins'
+      | 'media'
+      | 'folders'
+      | 'tags'
+      | 'categories'
+      | 'products'
+      | 'orders'
+      | 'customers'
+      | 'customer-identities';
     where?:
       | {
           [k: string]: unknown;
@@ -1063,7 +1140,18 @@ export interface CollectionQueryWidget {
 export interface ActivityWidget {
   data?: {
     excludedCollections?:
-      ('admins' | 'media' | 'folders' | 'tags' | 'categories' | 'products' | 'orders' | 'customers')[] | null;
+      | (
+          | 'admins'
+          | 'media'
+          | 'folders'
+          | 'tags'
+          | 'categories'
+          | 'products'
+          | 'orders'
+          | 'customers'
+          | 'customer-identities'
+        )[]
+      | null;
   };
   width: 'small' | 'medium' | 'large' | 'x-large' | 'full';
 }
