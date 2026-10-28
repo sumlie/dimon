@@ -7,4 +7,5 @@ export type Product = {
   oldPriceByn?: string;
   discount?: string;
   image: string;
+  published: boolean;
 };
