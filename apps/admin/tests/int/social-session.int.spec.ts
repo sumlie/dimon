@@ -81,6 +81,31 @@ describe('social session strategy', () => {
 
     expect(auth.user?.id).toBe(customer.id)
     expect(auth.user?.collection).toBe('customers')
+    expect(session.cookie).toContain('dimon_customer_session_v2=')
+    expect(session.cookie).toContain('Path=/api/auth')
+  })
+
+  it('does not authenticate a customer session on admin routes', async () => {
+    const customer = await createTestCustomer('admin-isolation')
+    const req = await createPayloadRequest({
+      payload,
+      req: { headers: new Headers() },
+    })
+    const session = await createCustomerSession({
+      payload,
+      req,
+      customer,
+      provider: 'google',
+    })
+
+    const headers = new Headers({ cookie: session.cookie })
+    const adminReq = await createPayloadRequest({
+      payload,
+      req: { headers, url: 'http://localhost/admin' },
+    })
+    const auth = await payload.auth({ headers, req: adminReq })
+
+    expect(auth.user).toBeNull()
   })
 
   it('rejects blocked customers even with a valid session', async () => {

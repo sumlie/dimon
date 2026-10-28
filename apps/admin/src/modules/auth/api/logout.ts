@@ -3,7 +3,7 @@ import { generateExpiredPayloadCookie } from 'payload/shared'
 import { jsonError } from '../errors'
 import { checkOrigin } from './me'
 import { authenticateRequest } from '../request'
-import { clearedSessionCookie } from '../session'
+import { clearedSessionCookies } from '../session'
 import { logoutCustomer } from '../service'
 
 export async function handleLogout(request: Request): Promise<Response> {
@@ -12,7 +12,7 @@ export async function handleLogout(request: Request): Promise<Response> {
 
   try {
     const { payload, req, user } = await authenticateRequest(request)
-    const cookies = [clearedSessionCookie()]
+    const cookies = [...clearedSessionCookies()]
 
     if (user && user.collection === 'customers') {
       await logoutCustomer({ payload, req, customer: user })

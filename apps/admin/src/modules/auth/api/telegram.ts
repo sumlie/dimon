@@ -4,6 +4,7 @@ import { verifyTelegramWidget } from '../providers'
 import { enforceRateLimit } from '../rateLimit'
 import { redirectWithError, redirectResponse, safeRedirect } from '../redirects'
 import { getAuthContext, authenticateRequest } from '../request'
+import { clearedLegacySessionCookie } from '../session'
 import { signInWithIdentity } from '../service'
 import {
   clearedStateCookie,
@@ -135,6 +136,7 @@ export async function handleTelegramCallback(request: Request): Promise<Response
 
     return redirectResponse(addQuery(result.redirectTo, 'auth', 'success'), [
       clearedStateCookie(),
+      clearedLegacySessionCookie(),
       result.session.cookie,
     ])
   } catch (error) {

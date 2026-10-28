@@ -4,6 +4,7 @@ import { getOAuthProvider } from '../providers'
 import { enforceRateLimit } from '../rateLimit'
 import { redirectWithError, redirectResponse, safeRedirect } from '../redirects'
 import { getAuthContext } from '../request'
+import { clearedLegacySessionCookie } from '../session'
 import { signInWithIdentity } from '../service'
 import { clearedStateCookie, readStateCookie, verifyStateValue, type OAuthState } from '../state'
 
@@ -103,6 +104,7 @@ export async function handleOAuthCallback(
 
     return redirectResponse(addQuery(result.redirectTo, 'auth', 'success'), [
       clearedStateCookie(),
+      clearedLegacySessionCookie(),
       result.session.cookie,
     ])
   } catch (error) {

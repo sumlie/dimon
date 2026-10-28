@@ -3,8 +3,10 @@ import { addSessionToUser, generateCookie, parseCookies } from 'payload/shared'
 import type { AuthStrategy } from 'payload'
 
 import {
+  AUTH_COOKIE_PATH,
   AUTH_SECRET,
   IS_PRODUCTION,
+  LEGACY_SESSION_COOKIE,
   SESSION_COOKIE,
   cookieBase,
   type SocialProviderId,
@@ -65,6 +67,7 @@ export async function createCustomerSession(args: {
     ...cookieBase,
     maxAge: collectionConfig.auth.tokenExpiration,
     name: SESSION_COOKIE,
+    path: AUTH_COOKIE_PATH,
     returnCookieAsObject: false,
     value: token,
   })
@@ -72,15 +75,34 @@ export async function createCustomerSession(args: {
   return { cookie, sid, token }
 }
 
-export function clearedSessionCookie(): string {
+function expiredCookie(name: string, path: string): string {
   return generateCookie<false>({
     ...cookieBase,
     expires: new Date(Date.now() - 1000),
     maxAge: 0,
-    name: SESSION_COOKIE,
+    name,
+    path,
     returnCookieAsObject: false,
     value: '',
   })
+}
+
+export function clearedSessionCookie(path = AUTH_COOKIE_PATH): string {
+  return expiredCookie(SESSION_COOKIE, path)
+}
+
+export function clearedLegacySessionCookie(path = '/'): string {
+  return expiredCookie(LEGACY_SESSION_COOKIE, path)
+}
+
+/** Clears the scoped cookie and every previously used cookie path/name. */
+export function clearedSessionCookies(): string[] {
+  return [
+    clearedSessionCookie(AUTH_COOKIE_PATH),
+    clearedSessionCookie('/'),
+    clearedLegacySessionCookie('/'),
+    clearedLegacySessionCookie(AUTH_COOKIE_PATH),
+  ]
 }
 
 export async function revokeCustomerSession(args: {
@@ -104,13 +126,25 @@ export async function revokeCustomerSession(args: {
 
 function expiredSessionHeaders(): Headers {
   const headers = new Headers()
-  headers.append('Set-Cookie', clearedSessionCookie())
+  for (const cookie of clearedSessionCookies()) headers.append('Set-Cookie', cookie)
   return headers
 }
 
 export const socialSessionStrategy: AuthStrategy = {
   name: 'dimon-social-session',
   authenticate: async ({ headers, payload, req }) => {
+    // Customer sessions must never take precedence over Payload admin auth.
+    // Local API calls have no meaningful pathname and fall back to `/`.
+    const pathname = req?.pathname
+    if (
+      pathname &&
+      pathname !== '/' &&
+      !pathname.startsWith(`${AUTH_COOKIE_PATH}/`) &&
+      pathname !== AUTH_COOKIE_PATH
+    ) {
+      return { user: null }
+    }
+
     const token = parseCookies(headers).get(SESSION_COOKIE)
     if (!token) return { user: null }
 

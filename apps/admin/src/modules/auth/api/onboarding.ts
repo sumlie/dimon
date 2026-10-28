@@ -2,6 +2,7 @@ import { jsonError, AuthError } from '../errors'
 import { checkOrigin } from './me'
 import { enforceRateLimit } from '../rateLimit'
 import { getAuthContext } from '../request'
+import { clearedLegacySessionCookie } from '../session'
 import { completeOnboarding, sanitizeCustomer } from '../service'
 import { clearedPendingCookie, readPendingCookie } from '../state'
 
@@ -71,6 +72,7 @@ export async function handleOnboarding(request: Request): Promise<Response> {
 
     const headers = new Headers({ 'Cache-Control': 'no-store' })
     headers.append('Set-Cookie', clearedPendingCookie())
+    headers.append('Set-Cookie', clearedLegacySessionCookie())
     headers.append('Set-Cookie', result.session.cookie)
 
     return Response.json(

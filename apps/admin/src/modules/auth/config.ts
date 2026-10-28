@@ -4,7 +4,9 @@ export const ALL_PROVIDERS = ['google', 'yandex', 'telegram', 'vk'] as const
 export type AuthProviderId = (typeof AUTH_PROVIDERS)[number]
 export type SocialProviderId = (typeof ALL_PROVIDERS)[number]
 
-export const SESSION_COOKIE = 'dimon_customer_session'
+export const SESSION_COOKIE = 'dimon_customer_session_v2'
+export const LEGACY_SESSION_COOKIE = 'dimon_customer_session'
+export const AUTH_COOKIE_PATH = '/api/auth'
 export const STATE_COOKIE = 'dimon_oauth_state'
 export const PENDING_COOKIE = 'dimon_oauth_pending'
 

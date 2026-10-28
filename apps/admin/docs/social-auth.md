@@ -9,7 +9,7 @@ The storefront supports Google, Yandex and Telegram login. Payload remains the s
 - Google and Yandex use the authorization code flow with PKCE and a signed, single-use `state` cookie.
 - Telegram uses the official Login Widget. The widget payload is verified server-side with HMAC-SHA256 and a freshness check.
 - Social links are stored in `customer-identities` with a unique `(provider, providerId)` index.
-- Social sessions use an HttpOnly `dimon_customer_session` cookie and Payload's `customers.sessions` storage. Payload's local JWT strategy is kept for future email/password login.
+- Social sessions use an HttpOnly `dimon_customer_session_v2` cookie and Payload's `customers.sessions` storage. Payload's local JWT strategy is kept for future email/password login.
 
 ## Environment
 
