@@ -15,7 +15,7 @@ export const PENDING_TTL_SECONDS = 15 * 60
 
 const isProduction = process.env.NODE_ENV === 'production'
 
-export const APP_URL = (process.env.APP_URL || 'http://localhost:3000').replace(/\/+$/, '')
+export const APP_URL = (process.env.APP_URL || 'http://localhost:3001').replace(/\/+$/, '')
 export const ADMIN_URL = (process.env.ADMIN_URL || 'http://localhost:3001').replace(/\/+$/, '')
 export const COOKIE_DOMAIN = process.env.COOKIE_DOMAIN || undefined
 export const IS_PRODUCTION = isProduction
