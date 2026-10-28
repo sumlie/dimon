@@ -2,10 +2,10 @@
 
 import { ArrowRight, X } from "lucide-react";
 import { useEffect, useState } from "react";
-import { createPortal } from "react-dom";
 import { RiTelegram2Line } from "react-icons/ri";
 import { Button } from "@/shared/ui/button";
 import { Dimon } from "@/shared/ui/dimon";
+import { Popup } from "@/shared/ui/popup";
 import { NAV_LINKS } from "../config/links";
 
 type MobileMenuProps = {
@@ -17,7 +17,7 @@ export function MobileMenu({ onClose }: MobileMenuProps) {
   useEffect(() => setMounted(true), []);
 
   const menu = (
-    <div className="fixed inset-0 z-90 flex min-h-dvh flex-col overflow-y-auto bg-white lg:hidden overflow-x-hidden">
+    <>
       <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rotate-[-8deg] select-none font-display text-[9rem] uppercase leading-none text-red-600/7 sm:text-[14rem]">
         <Dimon />
       </div>
@@ -73,9 +73,18 @@ export function MobileMenu({ onClose }: MobileMenuProps) {
           />
         </Button>
       </div>
-    </div>
+    </>
   );
 
   if (!mounted) return null;
-  return createPortal(menu, document.body);
+
+  return (
+    <Popup
+      open
+      onClose={onClose}
+      overlayClassName="fixed inset-0 z-90 flex min-h-dvh flex-col overflow-y-auto bg-white lg:hidden overflow-x-hidden"
+    >
+      {menu}
+    </Popup>
+  );
 }

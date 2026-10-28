@@ -4,6 +4,7 @@ import { X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { RiGoogleFill, RiTelegram2Fill } from "react-icons/ri";
 import { Button } from "@/shared/ui/button/button";
+import { Popup } from "@/shared/ui/popup";
 import { oauthStartUrl, startTelegram } from "../api/auth";
 import { authErrorText } from "../model/error-text";
 
@@ -75,17 +76,6 @@ export function AuthDialog({
     }
   }, [initialErrorCode, open]);
 
-  useEffect(() => {
-    if (!open) return;
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [onClose, open]);
-
   if (!open) return null;
 
   const target =
@@ -123,7 +113,7 @@ export function AuthDialog({
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-5 backdrop-blur-sm">
+    <Popup open={open} onClose={onClose}>
       <div
         role="dialog"
         aria-modal="true"
@@ -141,7 +131,7 @@ export function AuthDialog({
 
         <h2
           id="auth-dialog-title"
-          className="mb-1 font-impact text-4xl uppercase leading-none"
+          className="mb-1 font-display text-4xl uppercase leading-none"
         >
           {mode === "link" ? "привязать" : "войти"}
         </h2>
@@ -224,6 +214,6 @@ export function AuthDialog({
           </p>
         ) : null}
       </div>
-    </div>
+    </Popup>
   );
 }
