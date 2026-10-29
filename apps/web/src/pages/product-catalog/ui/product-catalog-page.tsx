@@ -1,46 +1,49 @@
-"use client";
-
-import { Header } from "@/widgets/header";
+import {
+  fetchCategories,
+  fetchProducts,
+} from "@/entities/product/model/products-api";
+import { Product as ProductCard } from "@/entities/product/ui/product";
+import { CategoryFilter } from "@/features/category-filter";
 import { Footer } from "@/widgets/footer/ui/footer";
-import { PRODUCTS } from "@/entities/product";
-import { Product } from "@/entities/product/ui/product";
-import { ArrowRight } from "lucide-react";
-import { Button } from "@/shared/ui/button";
+import { Header } from "@/widgets/header";
 
-export function ProductCatalogPage() {
+export default async function CatalogPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ category?: string }>;
+}) {
+  const searchParamsResult = await searchParams;
+  const category = searchParamsResult?.category;
+  const [products, categories] = await Promise.all([
+    fetchProducts(category),
+    fetchCategories(),
+  ]);
+
   return (
     <>
       <Header />
       <main className="min-h-screen bg-white">
-        <section className="w-full bg-white px-5 py-12 sm:px-8 sm:py-16 lg:py-20">
+        <section className="w-full bg-white px-5 py-16 sm:px-8 sm:py-24 lg:py-32">
           <div className="mx-auto max-w-7xl">
-            <div className="mb-8 flex items-baseline justify-between gap-4 border-b-2 border-black pb-4 sm:mb-12 sm:pb-6">
-              <h1 className="font-sans text-3xl font-extrabold lowercase tracking-tight text-black sm:text-4xl lg:text-5xl">
-                весь каталог
-              </h1>
-              <div className="hidden sm:block">
-                <Button
-                  href="#!"
-                  variant="text"
-                  size="sm"
-                  pd="none"
-                  className="items-center gap-1 lowercase"
-                >
-                  фильтры
-                  <ArrowRight
-                    size={16}
-                    strokeWidth={1.5}
-                    className="transition-transform group-hover/button:-rotate-45"
-                  />
-                </Button>
-              </div>
+            <h1 className="font-sans text-3xl font-extrabold lowercase tracking-tight text-black sm:text-4xl lg:text-5xl">
+              каталог
+            </h1>
+
+            <div className="mt-8 sm:mt-12">
+              <CategoryFilter categories={categories} active={category} />
             </div>
 
-            <div className="grid grid-cols-2 gap-x-3 gap-y-8 sm:grid-cols-3 lg:grid-cols-4">
-              {PRODUCTS.map((product) => (
-                <Product key={product.id} product={product} />
+            <div className="mt-8 grid grid-cols-2 gap-x-3 gap-y-8 sm:mt-12 sm:gap-x-4 sm:gap-y-10 lg:grid-cols-4">
+              {products.map((product) => (
+                <ProductCard key={product.id} product={product} />
               ))}
             </div>
+
+            {products.length === 0 && (
+              <p className="py-12 text-center text-black/60">
+                Товаров пока нет.
+              </p>
+            )}
           </div>
         </section>
       </main>

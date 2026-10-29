@@ -1,1 +1,1 @@
-export { ProductCatalogPage } from "./product-catalog-page";
+export { default } from "./product-catalog-page";
