@@ -22,6 +22,15 @@ export const Products: CollectionConfig = {
     group: 'Shop',
   },
 
+  access: {
+    read: ({ req: { user } }) => {
+      if (user) return true;
+      return {
+        status: { equals: 'published' },
+      };
+    },
+  },
+
   fields: [
     {
       name: 'title',
