@@ -8,7 +8,7 @@ type ProductProps = {
 
 export function Product({ product }: ProductProps) {
   return (
-    <Link href="#!" className="group flex flex-col">
+    <Link href={`/catalog/${product.id}`} className="group flex flex-col">
       <div className="relative aspect-square overflow-hidden border border-black sm:border-2">
         <img
           src={product.image}

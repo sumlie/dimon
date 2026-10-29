@@ -8,4 +8,11 @@ export type Product = {
   discount?: string;
   image: string;
   published: boolean;
+  description?: string;
+};
+
+export type Category = {
+  id: string;
+  title: string;
+  slug: string;
 };
