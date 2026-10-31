@@ -25,7 +25,7 @@ export default async function CatalogPage({
       <Header showLogo />
 
       <main className="min-h-screen bg-white">
-        <section className="w-full bg-white px-5 py-16 sm:px-8 sm:py-24 lg:py-32">
+        <section className="w-full bg-white px-5 py-20 sm:px-8 sm:py-24 lg:py-32">
           <div className="flex items-baseline-last justify-between gap-4 sm:gap-6">
             <CategoryFilter
               categories={categories}
