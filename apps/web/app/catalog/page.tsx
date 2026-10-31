@@ -1,9 +1,9 @@
-import { ProductCatalogPage } from "@/pages/product-catalog";
+import { CatalogPage } from "@/pages/catalog";
 
 export default async function Page({
   searchParams,
 }: {
   searchParams: Promise<{ category?: string }>;
 }) {
-  return <ProductCatalogPage searchParams={searchParams} />;
+  return <CatalogPage searchParams={searchParams} />;
 }

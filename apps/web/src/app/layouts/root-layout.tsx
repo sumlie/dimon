@@ -39,13 +39,17 @@ export const metadata: Metadata = {
     "Одежда без рамок и единой идеи. Просто создаём то, что нравится нам и вам, и распространяем ДИМОНа дальше.",
 };
 
+import { CartProvider } from "@/features/cart/model/cart-context";
+
 export function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
       className={`${inter.variable} ${impact.variable} antialiased`}
     >
-      <body className="relative w-full">{children}</body>
+      <body className="relative w-full">
+        <CartProvider>{children}</CartProvider>
+      </body>
     </html>
   );
 }

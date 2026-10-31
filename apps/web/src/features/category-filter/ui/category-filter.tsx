@@ -1,34 +1,54 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import type { Category } from "@/entities/product/model/products-api";
+import { ChevronDown } from "lucide-react";
 
-export type CategoryFilterProps = {
-  categories: Category[];
+export function CategoryFilter({ categories, active = "все товары", total }: {
+  categories: { id: string; title: string; slug: string }[];
   active?: string;
-};
-
-export function CategoryFilter({ categories, active }: CategoryFilterProps) {
-  const base =
-    "border border-black px-4 py-2 font-sans text-sm lowercase transition-colors whitespace-nowrap";
+  total: number;
+}) {
+  const [open, setOpen] = useState(false);
+  const current = categories.find((c) => c.slug === active)?.title ?? "все товары";
+  const all = [{ id: "all", title: "все товары", slug: "" }, ...categories];
 
   return (
-    <div className="flex flex-wrap gap-2 sm:overflow-x-auto sm:px-2 pb-1">
-      <Link
-        href="/catalog"
-        className={`${base} ${!active ? "bg-black text-white" : "bg-white text-black hover:bg-black hover:text-white"}`}
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="flex items-baseline gap-3"
       >
-        все
-      </Link>
-      {categories.map((c) => (
-        <Link
-          key={c.id}
-          href={`/catalog?category=${c.slug}`}
-          className={`${base} ${active === c.slug ? "bg-black text-white" : "bg-white text-black hover:bg-black hover:text-white"}`}
-        >
-          {c.title}
-        </Link>
-      ))}
+        <h1 className="font-sans text-3xl font-extrabold lowercase tracking-tight text-black sm:text-4xl lg:text-5xl">
+          {current}
+        </h1>
+        <sup className="font-sans text-sm text-black/40">{total}</sup>
+        <ChevronDown
+          size={24}
+          strokeWidth={1.5}
+          className={`self-center mt-2 transition-transform ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+
+      {open && (
+        <ul className="absolute left-0 top-full z-10 mt-4 min-w-64 border border-black bg-white">
+          {all.map((c) => (
+            <li key={c.id} className="border-b border-black last:border-b-0">
+              <Link
+                href={c.slug ? `/catalog?category=${c.slug}` : "/catalog"}
+                onClick={() => setOpen(false)}
+                className={`flex items-center justify-between px-4 py-3 font-sans text-sm lowercase transition-colors hover:bg-black hover:text-white ${
+                  (active ?? "") === c.slug ? "font-extrabold" : ""
+                }`}
+              >
+                {c.title}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

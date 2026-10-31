@@ -1,5 +1,5 @@
 import { Community } from "@/pages/home/ui/sections/community";
-import { FeaturedProducts } from "@/pages/home/ui/sections/featured-products";
+import { FeaturedProducts } from "@/widgets/featured-products";
 import { HeroSection } from "@/pages/home/ui/sections/hero";
 import { Manifesto } from "@/pages/home/ui/sections/manifesto";
 import { ScrollGallery } from "@/pages/home/ui/sections/scroll-gallery";

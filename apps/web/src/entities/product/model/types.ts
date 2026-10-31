@@ -7,8 +7,14 @@ export type Product = {
   oldPriceByn?: string;
   discount?: string;
   image: string;
+  images: string[];
   published: boolean;
   description?: string;
+  category?: {
+    id: string | number;
+    name: string;
+    slug: string;
+  } | null;
 };
 
 export type Category = {

@@ -9,7 +9,7 @@ type ProductProps = {
 export function Product({ product }: ProductProps) {
   return (
     <Link href={`/catalog/${product.id}`} className="group flex flex-col">
-      <div className="relative aspect-square overflow-hidden border border-black sm:border-2">
+      <div className="relative aspect-square overflow-hidden">
         <img
           src={product.image}
           alt={product.name}
@@ -32,7 +32,7 @@ export function Product({ product }: ProductProps) {
           <span className="flex items-baseline gap-1 sm:gap-1.5">
             {product.oldPrice ? (
               <span className="text-xs text-neutral-400 line-through sm:text-base">
-                {product.oldPriceByn}
+                {product.oldPriceByn} byn
               </span>
             ) : null}
 
@@ -41,17 +41,17 @@ export function Product({ product }: ProductProps) {
                 product.oldPriceByn ? "text-red-600" : "text-neutral-500"
               }
             >
-              {product.priceByn}
+              {product.priceByn} byn
             </span>
           </span>
 
           <span className="flex items-baseline gap-1 text-xs text-neutral-400 sm:gap-1.5 sm:text-sm">
             {product.oldPrice ? (
-              <span className="line-through">{product.oldPrice}</span>
+              <span className="line-through">{product.oldPrice} rub</span>
             ) : null}
 
             <span className={product.oldPrice ? "text-red-500" : ""}>
-              {product.price}
+              {product.price} rub
             </span>
           </span>
         </span>
