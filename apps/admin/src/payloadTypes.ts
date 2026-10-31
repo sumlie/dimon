@@ -417,6 +417,7 @@ export interface Tag {
 export interface Category {
   id: number;
   title: string;
+  slug: string;
   products?: {
     docs?: (number | Product)[];
     hasNextPage?: boolean;
@@ -803,6 +804,7 @@ export interface TagsSelect<T extends boolean = true> {
  */
 export interface CategoriesSelect<T extends boolean = true> {
   title?: T;
+  slug?: T;
   products?: T;
   createdBy?: T;
   updatedBy?: T;

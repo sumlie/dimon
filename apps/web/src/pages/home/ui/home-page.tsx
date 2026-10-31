@@ -5,21 +5,28 @@ import { Manifesto } from "@/pages/home/ui/sections/manifesto";
 import { ScrollGallery } from "@/pages/home/ui/sections/scroll-gallery";
 import { Footer } from "@/widgets/footer/ui/footer";
 import { Header } from "@/widgets/header";
-import { getSubscriberCount } from "../api";
+import { fetchGalleryPhotos, getSubscriberCount } from "../api";
+import { fetchProducts, getCategoriesFromProducts } from "@/entities/product/model/products-api";
 
 export async function HomePage() {
-  const subscriberCount = await getSubscriberCount();
+  const [subscriberCount, products, photos] = await Promise.all([
+    getSubscriberCount(),
+    fetchProducts(),
+    fetchGalleryPhotos(),
+  ]);
+
+  const categories = getCategoriesFromProducts(products);
 
   return (
     <>
       <Header />
       <HeroSection />
-      <FeaturedProducts />
+      <FeaturedProducts prodcutsArray={products} />
       <Manifesto />
-      <FeaturedProducts title="новинки" />
-      <ScrollGallery />
+      <FeaturedProducts title="новинки" prodcutsArray={products} />
+      <ScrollGallery photos={photos} />
       <Community subscriberCount={subscriberCount} />
-      <Footer />
+      <Footer categories={categories} />
     </>
   );
 }

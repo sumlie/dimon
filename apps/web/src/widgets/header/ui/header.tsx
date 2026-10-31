@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Menu } from "lucide-react";
 import { useEffect, useState } from "react";
 import { RiTelegram2Line } from "react-icons/ri";
@@ -11,9 +12,15 @@ import { Button } from "@/shared/ui/button";
 import { NAV_LINKS } from "../config/links";
 import { MobileMenu } from "./mobile-menu";
 
+import { Dimon } from "@/shared/ui/dimon";
+
 const MOBILE_BREAKPOINT = "(min-width: 1024px)";
 
-export function Header() {
+type HeaderProps = {
+  showLogo?: boolean;
+};
+
+export function Header({ showLogo = false }: HeaderProps) {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -28,11 +35,13 @@ export function Header() {
 
     handleChange(mediaQuery);
     mediaQuery.addEventListener("change", handleChange);
+
     return () => mediaQuery.removeEventListener("change", handleChange);
   }, []);
 
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
+
     return () => {
       document.body.style.overflow = "";
     };
@@ -40,8 +49,10 @@ export function Header() {
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 300);
+
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
+
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
@@ -76,6 +87,15 @@ export function Header() {
         </span>
         <span>меню</span>
       </Button>
+
+      {showLogo && (
+        <Link
+          href="/"
+          className="absolute left-1/2 -translate-x-1/2 whitespace-nowrap leading-none tracking-wide text-red-600 uppercase font-display text-[30px] sm:text-[42px]"
+        >
+          <Dimon />
+        </Link>
+      )}
 
       <nav className="flex items-start gap-4 font-sans lg:gap-8">
         <Button

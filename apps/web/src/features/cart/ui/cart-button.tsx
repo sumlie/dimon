@@ -8,7 +8,7 @@ export function CartButton() {
   const count = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
-    <Button href="#!" variant="social" size="mini" pd="none">
+    <Button href="/cart" variant="social" size="mini" pd="none">
       <span className="relative flex h-7 w-7 items-center justify-center">
         <ShoppingBag size={22} />
 

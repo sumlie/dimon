@@ -2,51 +2,30 @@ import { RiInstagramLine, RiTelegram2Line, RiTiktokFill } from "react-icons/ri";
 
 export const FOOTER_COLUMNS = [
   {
-    title: "каталог",
-    links: [
-      { label: "футболки", href: "#!" },
-      { label: "головные уборы", href: "#!" },
-      { label: "нижнее белье", href: "#!" },
-      { label: "шарфы", href: "#!" },
-      { label: "сеты", href: "#!" },
-      { label: "новинки", href: "#!" },
-    ],
-  },
-  {
     title: "покупателям",
     links: [
-      { label: "faq", href: "#!" },
-      { label: "как сделать заказ", href: "#!" },
-      { label: "оплата", href: "#!" },
-      { label: "доставка", href: "#!" },
-      { label: "возврат и обмен", href: "#!" },
-      { label: "размерная сетка", href: "#!" },
+      { label: "faq", href: "/faq" },
+      { label: "как сделать заказ", href: "/order-info" },
+      { label: "оплата", href: "/payment-info" },
+      { label: "доставка", href: "/order-info" },
+      { label: "возврат и обмен", href: "/returns-info" },
+      { label: "размерная сетка", href: "/size-guide" },
     ],
   },
   {
     title: "о бренде",
     links: [
-      { label: "о нас", href: "#!" },
-      { label: "димоны", href: "#!" },
-      { label: "сотрудничество", href: "#!" },
-    ],
-  },
-  {
-    title: "инфо",
-    links: [
-      { label: "блог", href: "#!" },
-      { label: "лукбук", href: "#!" },
-      { label: "отзывы", href: "#!" },
-      { label: "пресса", href: "#!" },
+      { label: "о нас", href: "/about" },
+      { label: "димоны", href: "https://t.me/dimonclo" },
+      { label: "сотрудничество", href: "https://t.me/soatvey" },
     ],
   },
   {
     title: "документы",
     links: [
-      { label: "пользовательское соглашение", href: "#!" },
-      { label: "политика конфиденциальности", href: "#!" },
-      { label: "публичная оферта", href: "#!" },
-      { label: "реквизиты", href: "#!" },
+      { label: "пользовательское соглашение", href: "/terms-of-use" },
+      { label: "политика конфиденциальности", href: "/privacy-policy" },
+      { label: "публичная оферта", href: "/public-offer" },
     ],
   },
 ];

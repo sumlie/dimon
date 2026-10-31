@@ -24,6 +24,7 @@ type PayloadProduct = {
   oldPrice?: string;
   oldPriceByn?: string;
   discount?: string;
+  category?: PayloadCategory | string | number | null;
 };
 
 // URL картинки
@@ -90,6 +91,14 @@ export async function fetchProducts(category?: string): Promise<Product[]> {
       image: images[0] ?? "",
       images,
       published: p.status === "published",
+      category:
+        p.category && typeof p.category === "object"
+          ? {
+              id: String(p.category.id),
+              name: p.category.title,
+              slug: p.category.slug,
+            }
+          : null,
     };
   });
 }
@@ -199,4 +208,25 @@ export async function fetchRelatedProducts(
     .slice(0, limit - relatedProducts.length);
 
   return [...relatedProducts, ...additionalProducts];
+}
+
+export function getCategoriesFromProducts(products: Product[]) {
+  const categories = new Map<
+    string,
+    { id: string; title: string; slug: string }
+  >();
+
+  for (const product of products) {
+    const category = product.category;
+
+    if (!category?.slug) continue;
+
+    categories.set(String(category.id), {
+      id: String(category.id),
+      title: category.name,
+      slug: category.slug,
+    });
+  }
+
+  return Array.from(categories.values());
 }

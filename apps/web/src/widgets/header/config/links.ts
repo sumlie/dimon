@@ -4,8 +4,8 @@ export type NavLink = {
 };
 
 export const NAV_LINKS: NavLink[] = [
-  { label: "каталог", href: "#!" },
-  { label: "доставка", href: "#!" },
-  { label: "блог", href: "#!" },
-  { label: "о нас", href: "#!" },
+  { label: "каталог", href: "/catalog" },
+  { label: "доставка", href: "/delivery-info" },
+  { label: "оплата", href: "/payment-info" },
+  { label: "о нас", href: "/about" },
 ];

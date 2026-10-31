@@ -1,5 +1,6 @@
 import { Button } from "@/shared/ui/button";
 
+import type { Category } from "@/entities/product/model/types";
 import {
   FOOTER_CARRIERS,
   FOOTER_COLUMNS,
@@ -8,12 +9,27 @@ import {
   SOCIAL_ICONS,
 } from "../config/consts";
 
-export function Footer() {
+type FooterProps = {
+  categories: Category[];
+};
+
+export function Footer({ categories }: FooterProps) {
+  const columns = [
+    {
+      title: "каталог",
+      links: categories.map((category) => ({
+        label: category.title,
+        href: `/catalog?category=${encodeURIComponent(category.slug)}`,
+      })),
+    },
+    ...FOOTER_COLUMNS,
+  ];
+
   return (
     <footer className="w-full bg-black text-white">
       <div className="mx-auto px-6 py-12 sm:px-8 sm:py-16 lg:px-12 lg:py-20">
-        <div className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3 sm:gap-x-8 sm:gap-y-12 lg:grid-cols-4 xl:grid-cols-5">
-          {FOOTER_COLUMNS.map((column) => (
+        <div className="grid grid-cols-2 gap-x-6 gap-y-10 sm:gap-x-8 sm:gap-y-12 lg:grid-cols-4">
+          {columns.map((column) => (
             <div key={column.title}>
               <p className="font-sans text-sm lowercase text-white/40">
                 {column.title}
@@ -45,7 +61,7 @@ export function Footer() {
 
             <div className="mt-4 flex flex-col gap-2 lowercase">
               <Button
-                href="https://t.me/username"
+                href="https://t.me/soatvey"
                 target="_blank"
                 rel="noopener noreferrer"
                 variant="textInvert"
@@ -53,6 +69,14 @@ export function Footer() {
                 className="w-fit"
               >
                 @soatvey
+              </Button>
+
+              <Button
+                variant="textInvert"
+                pd="none"
+                className="w-fit"
+              >
+                dimonclo.support@gmail.com
               </Button>
 
               <p className="font-sans text-base text-white/60 sm:text-lg">
@@ -120,7 +144,7 @@ export function Footer() {
         </div>
 
         <div className="mt-8 flex flex-col gap-2 border-t border-white/15 pt-6 font-sans text-xs lowercase text-white/40 sm:mt-12 sm:flex-row sm:items-center sm:justify-between sm:pt-8">
-          <p>© 2026 димон. ип иванов и. и., огрнип 000000000000000</p>
+          <p>© 2026 димон. ип есьман м.в., егр 0962098, унп 291971050</p>
 
           <p>
             разработано при поддержке{" "}

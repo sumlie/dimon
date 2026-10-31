@@ -22,7 +22,7 @@ export default async function CatalogPage({
 
   return (
     <>
-      <Header />
+      <Header showLogo />
 
       <main className="min-h-screen bg-white">
         <section className="w-full bg-white px-5 py-16 sm:px-8 sm:py-24 lg:py-32">
@@ -48,7 +48,7 @@ export default async function CatalogPage({
         </section>
       </main>
 
-      <Footer />
+      <Footer categories={categories} />
     </>
   );
 }

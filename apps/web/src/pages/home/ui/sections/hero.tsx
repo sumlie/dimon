@@ -11,7 +11,7 @@ export const SCROLL_DISTANCE = 450;
 
 const TARGET_FONT_SIZE_MOBILE = 30;
 const TARGET_FONT_SIZE_DESKTOP = 42;
-const DESKTOP_BREAKPOINT = "(min-width: 1024px)";
+const DESKTOP_BREAKPOINT = "(min-width: 640px)";
 
 export function HeroSection() {
   const spacerRef = useRef<HTMLDivElement>(null);

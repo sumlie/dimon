@@ -1,7 +1,7 @@
 import { LLMInstructionsMenuItem as LLMInstructionsMenuItem_3817bf644402e67bfe6577f60ef982de } from '@payloadcms/ui'
-import { NullField as NullField_3817bf644402e67bfe6577f60ef982de } from '@payloadcms/ui'
 import { HierarchyField as HierarchyField_ab83ff7e88da8d3530831f296ec4756a } from '@payloadcms/ui/rsc'
 import { HierarchyButton as HierarchyButton_ab83ff7e88da8d3530831f296ec4756a } from '@payloadcms/ui/rsc'
+import { NullField as NullField_3817bf644402e67bfe6577f60ef982de } from '@payloadcms/ui'
 import { default as default_cd61c2276d1cdf78a4ec8ee7be3b9393 } from '../../../modules/products/ui/photoCell'
 import { default as default_0d78b8b8354cf2c10fa5f2a380698a1d } from '../../../shared/ui/editableNumberCell'
 import { default as default_0a7ea7859d63feef82162bb730348b8d } from '../../../shared/ui/editableSelectCell'
@@ -37,9 +37,9 @@ import { UploadDropzoneCollectionsField as UploadDropzoneCollectionsField_3817bf
 /** @type import('payload').ImportMap */
 export const importMap = {
   "@payloadcms/ui#LLMInstructionsMenuItem": LLMInstructionsMenuItem_3817bf644402e67bfe6577f60ef982de,
-  "@payloadcms/ui#NullField": NullField_3817bf644402e67bfe6577f60ef982de,
   "@payloadcms/ui/rsc#HierarchyField": HierarchyField_ab83ff7e88da8d3530831f296ec4756a,
   "@payloadcms/ui/rsc#HierarchyButton": HierarchyButton_ab83ff7e88da8d3530831f296ec4756a,
+  "@payloadcms/ui#NullField": NullField_3817bf644402e67bfe6577f60ef982de,
   "/modules/products/ui/photoCell#default": default_cd61c2276d1cdf78a4ec8ee7be3b9393,
   "/shared/ui/editableNumberCell#default": default_0d78b8b8354cf2c10fa5f2a380698a1d,
   "/shared/ui/editableSelectCell#default": default_0a7ea7859d63feef82162bb730348b8d,

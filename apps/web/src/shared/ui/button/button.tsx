@@ -5,7 +5,7 @@ import type { ComponentProps, ReactNode } from "react";
 import { cn } from "@/shared/lib/cn";
 
 export const buttonVariants = cva(
-  "group/button inline-flex shrink-0 items-center justify-center font-sans transition-colors outline-none select-none disabled:pointer-events-none disabled:opacity-50",
+  "group/button inline-flex shrink-0 items-center justify-center font-sans transition-colors cursor-pointer outline-none disabled:pointer-events-none disabled:opacity-50",
   {
     variants: {
       variant: {
@@ -17,10 +17,8 @@ export const buttonVariants = cva(
 
         text: "text-black hover:text-red-600",
 
-        // та же текстовая ссылка, но под тёмный фон (футер и т.п.)
         textInvert: "text-white hover:text-red-600",
 
-        // приглушённая подчёркнутая ссылка внутри абзаца на тёмном фоне
         muted: "text-white/40 underline underline-offset-2 hover:text-white",
 
         white:
@@ -33,7 +31,6 @@ export const buttonVariants = cva(
 
         social: "relative flex-col gap-0 text-black hover:text-red-600",
 
-        // квадратная кнопка-иконка в рамке — соцсети в футере
         iconBox:
           "border border-white/20 text-white hover:border-red-600 hover:text-red-600",
       },
@@ -47,8 +44,6 @@ export const buttonVariants = cva(
         social: "text-xs sm:text-sm",
         mini: "text-[11px] sm:text-xs",
 
-        // не задаёт свой размер текста — наследует от родителя;
-        // нужен для ссылок внутри обычного текста/абзаца
         inherit: "",
       },
 

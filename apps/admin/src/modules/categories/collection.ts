@@ -27,6 +27,13 @@ export const Categories: CollectionConfig = {
       required: true,
     },
     {
+      name: 'slug',
+      type: 'text',
+      label: 'Slug',
+      unique: true,
+      required: true,
+    },
+    {
       name: 'products',
       type: 'join',
       label: 'Товары категории',
