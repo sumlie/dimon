@@ -8,23 +8,22 @@ type FeaturedProductsProps = {
   title?: string;
   catalogHref?: string;
   prodcutsArray?: TProduct[];
+  limit?: number;
 };
 
 export async function FeaturedProducts({
   title = "популярное",
   catalogHref = "/catalog",
   prodcutsArray,
+  limit,
 }: FeaturedProductsProps) {
-  let products = [];
+  const products = prodcutsArray ?? (await fetchProducts());
 
-  if (!prodcutsArray) {
-    products = await fetchProducts();
-  } else {
-    products = prodcutsArray;
-  }
+  const displayedProducts =
+    limit === undefined ? products : products.slice(0, Math.max(0, limit));
 
   return (
-    <section className="w-full bg-white px-5 sm:px-8 py-16 sm:py-24 lg:py-32">
+    <section className="w-full bg-white px-5 py-16 sm:px-8 sm:py-24 lg:py-32">
       <div className="flex items-baseline-last justify-between gap-4 sm:gap-6">
         <h2 className="font-sans text-3xl font-extrabold lowercase tracking-tight text-black sm:text-4xl lg:text-5xl">
           {title}
@@ -47,7 +46,7 @@ export async function FeaturedProducts({
       </div>
 
       <div className="mt-8 grid grid-cols-2 gap-x-6 gap-y-8 sm:mt-12 sm:gap-x-6 sm:gap-y-10 lg:grid-cols-4">
-        {products.map((product) => (
+        {displayedProducts.map((product) => (
           <Product key={product.id} product={product} />
         ))}
       </div>

@@ -21,9 +21,9 @@ export async function HomePage() {
     <>
       <Header />
       <HeroSection />
-      <FeaturedProducts prodcutsArray={products} />
+      <FeaturedProducts prodcutsArray={products} limit={4} />
       <Manifesto />
-      <FeaturedProducts title="новинки" prodcutsArray={products} />
+      <FeaturedProducts title="новинки" prodcutsArray={products} limit={4} />
       <ScrollGallery photos={photos} />
       <Community subscriberCount={subscriberCount} />
       <Footer categories={categories} />
