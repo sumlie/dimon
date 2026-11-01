@@ -1,32 +1,93 @@
 import type { DocumentViewServerProps, PayloadRequest } from 'payload'
 
 import { grid, MUTED_OPACITY } from '@/shared/lib/theme'
-import { formatDateTime, formatPrice, getRelativeTime } from '@/shared/lib/format'
+import {
+  formatDateTime,
+  formatPrice,
+  getRelativeTime,
+} from '@/shared/lib/format'
 
 import { Info } from '@/shared/ui/info'
 import { Section } from '@/shared/ui/section'
 import { StatusSelect } from '@/shared/ui/statusSelect'
+
 import { getProductId, getProductsById } from './getProductsById'
 import { OrderItemCard } from './orderItemCard'
 import type { OrderDocument } from './types'
 
 const STATUS_UPDATE_URL = '/api/orders/:id/update-status'
-const PAYMENT_STATUS_UPDATE_URL = '/api/orders/:id/update-payment-status'
+
+const PAYMENT_STATUS_UPDATE_URL =
+  '/api/orders/:id/update-payment-status'
+
+const DELIVERY_METHOD_LABELS: Record<string, string> = {
+  pickup: 'Самовывоз',
+  cdek: 'СДЭК',
+  belmail: 'Белпочта',
+  euromail: 'Европочта',
+}
+
+const DELIVERY_REGION_LABELS: Record<string, string> = {
+  belarus: 'Беларусь',
+  moscow: 'Москва и Московская область',
+  russia: 'Другие регионы России',
+  cis: 'Страны СНГ',
+  world: 'Остальной мир',
+}
+
+/*
+ * Дополнительные поля добавляем здесь, чтобы не требовать
+ * немедленного изменения существующего OrderDocument.
+ */
 
 function getOptions(req: PayloadRequest, name: string) {
   const field = req.payload.collections.orders.config.fields.find(
-    (f) => 'name' in f && f.name === name,
-  ) as { options?: ({ label: unknown; value: string } | string)[] } | undefined
+    (item) => 'name' in item && item.name === name,
+  ) as
+    | {
+        options?: (
+          | { label: unknown; value: string }
+          | string
+        )[]
+      }
+    | undefined
 
-  return (field?.options ?? []).map((o) =>
-    typeof o === 'string'
-      ? { label: o, value: o }
-      : { label: String(o.label), value: o.value },
+  return (field?.options ?? []).map((option) =>
+    typeof option === 'string'
+      ? { label: option, value: option }
+      : {
+          label: String(option.label),
+          value: option.value,
+        },
   )
 }
 
-export default async function OrderView({ doc, initPageResult }: DocumentViewServerProps) {
+function getLabel(
+  value: string | null | undefined,
+  labels: Record<string, string>,
+): string {
+  if (!value) return '—'
+
+  return labels[value] ?? value
+}
+
+function formatOptionalPrice(value: unknown): string {
+  if (
+    typeof value !== 'number' ||
+    !Number.isFinite(value)
+  ) {
+    return '—'
+  }
+
+  return formatPrice(value) ?? '—'
+}
+
+export default async function OrderView({
+  doc,
+  initPageResult,
+}: DocumentViewServerProps) {
   const order = doc as unknown as OrderDocument
+
   const id = String(order.id)
   const items = order.items ?? []
 
@@ -37,6 +98,55 @@ export default async function OrderView({ doc, initPageResult }: DocumentViewSer
 
   const statusOptions = getOptions(req, 'status')
   const paymentOptions = getOptions(req, 'paymentStatus')
+
+  const isPickup = order.deliveryMethod === 'pickup'
+
+  const deliveryMethod = getLabel(
+    order.deliveryMethod,
+    DELIVERY_METHOD_LABELS,
+  )
+
+  const deliveryRegion = getLabel(
+    order.deliveryRegion,
+    DELIVERY_REGION_LABELS,
+  )
+
+  /*
+   * Считаем стоимость по сохранённым ценам заказа.
+   * Не берём текущие цены товаров: они могли измениться.
+   *
+   * Если в старом заказе unitPrice отсутствует, не показываем
+   * выдуманную сумму.
+   */
+  const itemsTotalKopecks = items.reduce<number | null>((sum, item) => {
+    if (
+      sum === null ||
+      typeof item.quantity !== 'number' ||
+      !Number.isFinite(item.quantity) ||
+      typeof item.unitPrice !== 'number' ||
+      !Number.isFinite(item.unitPrice)
+    ) {
+      return null
+    }
+
+    return sum + Math.round(item.unitPrice * 100) * item.quantity
+  }, 0)
+
+  const itemsTotal =
+    items.length > 0 && itemsTotalKopecks !== null
+      ? itemsTotalKopecks / 100
+      : null
+
+  const hasDiscount =
+    Boolean(order.promoCode) ||
+    (typeof order.discountAmount === 'number' &&
+      order.discountAmount > 0)
+
+  const discountLabel =
+    typeof order.discountPercent === 'number' &&
+    order.discountPercent > 0
+      ? `Скидка ${order.discountPercent}%`
+      : 'Скидка'
 
   return (
     <div
@@ -59,19 +169,40 @@ export default async function OrderView({ doc, initPageResult }: DocumentViewSer
         }}
       >
         <div>
-          <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 600, lineHeight: 1.4 }}>
+          <h1
+            style={{
+              margin: 0,
+              fontSize: '24px',
+              fontWeight: 600,
+              lineHeight: 1.4,
+            }}
+          >
             Заказ №{id}
           </h1>
-          <p style={{ margin: '8px 0 0', fontSize: '13px', opacity: MUTED_OPACITY }}>
+
+          <p
+            style={{
+              margin: '8px 0 0',
+              fontSize: '13px',
+              opacity: MUTED_OPACITY,
+            }}
+          >
             Создан {getRelativeTime(order.createdAt)}
           </p>
         </div>
       </header>
 
-      <main style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      <main
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '20px',
+        }}
+      >
         <Section title="Информация о заказе">
           <div style={grid}>
             <Info label="ID заказа" value={order.id} />
+
             <Info label="Статус">
               <StatusSelect
                 fieldName="status"
@@ -81,6 +212,7 @@ export default async function OrderView({ doc, initPageResult }: DocumentViewSer
                 options={statusOptions}
               />
             </Info>
+
             <Info label="Статус оплаты">
               <StatusSelect
                 fieldName="paymentStatus"
@@ -90,32 +222,65 @@ export default async function OrderView({ doc, initPageResult }: DocumentViewSer
                 options={paymentOptions}
               />
             </Info>
-            <Info label="Общая стоимость" value={formatPrice(order.total)} />
-            <Info label="Дата создания" value={formatDateTime(order.createdAt)} />
+
+            <Info
+              label="Общая стоимость"
+              value={formatOptionalPrice(order.total)}
+            />
+
+            <Info
+              label="Дата создания"
+              value={formatDateTime(order.createdAt)}
+            />
           </div>
         </Section>
 
         <Section
           title="Товары"
           aside={
-            <span style={{ fontSize: '13px', fontWeight: 400, opacity: MUTED_OPACITY }}>
+            <span
+              style={{
+                fontSize: '13px',
+                fontWeight: 400,
+                opacity: MUTED_OPACITY,
+              }}
+            >
               Позиций: {items.length}
             </span>
           }
         >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '16px' }}>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px',
+              padding: '16px',
+            }}
+          >
             {items.length === 0 && (
-              <span style={{ fontSize: '14px', opacity: MUTED_OPACITY }}>Нет товаров</span>
+              <span
+                style={{
+                  fontSize: '14px',
+                  opacity: MUTED_OPACITY,
+                }}
+              >
+                Нет товаров
+              </span>
             )}
 
-            {items.map((item, i) => {
+            {items.map((item, index) => {
               const productId = getProductId(item.product)
+
               return (
                 <OrderItemCard
-                  key={item.id ?? i}
+                  key={item.id ?? index}
                   item={item}
                   productId={productId}
-                  product={productId != null ? productsById.get(productId) : undefined}
+                  product={
+                    productId != null
+                      ? productsById.get(productId)
+                      : undefined
+                  }
                   adminRoute={adminRoute}
                 />
               )
@@ -131,8 +296,16 @@ export default async function OrderView({ doc, initPageResult }: DocumentViewSer
                 fontWeight: 600,
               }}
             >
-              <span style={{ fontWeight: 400, opacity: MUTED_OPACITY }}>Итого:</span>
-              {formatPrice(order.total) ?? '—'}
+              <span
+                style={{
+                  fontWeight: 400,
+                  opacity: MUTED_OPACITY,
+                }}
+              >
+                Итого:
+              </span>
+
+              {formatOptionalPrice(order.total)}
             </div>
           </div>
         </Section>
@@ -146,11 +319,36 @@ export default async function OrderView({ doc, initPageResult }: DocumentViewSer
           </div>
         </Section>
 
-        <Section title="Доставка и оплата">
+        <Section title="Получение и оплата">
           <div style={grid}>
-            <Info label="Способ доставки" value={order.deliveryMethod} />
-            <Info label="Адрес / пункт выдачи" value={order.deliveryAddress} />
-            <Info label="Способ оплаты" value={order.paymentMethod} />
+            <Info
+              label="Способ получения"
+              value={deliveryMethod}
+            />
+
+            <Info
+              label="Регион"
+              value={deliveryRegion}
+            />
+
+            <Info
+              label={isPickup ? 'Адрес самовывоза' : 'Адрес / пункт выдачи'}
+              value={order.deliveryAddress}
+            />
+
+            <Info
+              label={isPickup ? 'Стоимость самовывоза' : 'Стоимость доставки'}
+              value={
+                order.deliveryPrice === 0
+                  ? 'Бесплатно'
+                  : formatOptionalPrice(order.deliveryPrice)
+              }
+            />
+
+            <Info
+              label="Способ оплаты"
+              value={order.paymentMethod}
+            />
           </div>
         </Section>
 
@@ -161,6 +359,83 @@ export default async function OrderView({ doc, initPageResult }: DocumentViewSer
             </div>
           </Section>
         )}
+
+        <Section title="Стоимость заказа">
+          <div style={{ padding: '16px' }}>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))',
+                gap: '12px',
+              }}
+            >
+              <Info
+                label="Товары"
+                value={formatOptionalPrice(itemsTotal)}
+              />
+
+              {order.promoCode && (
+                <Info
+                  label="Промокод"
+                  value={order.promoCode}
+                />
+              )}
+
+              {hasDiscount && (
+                <Info label={discountLabel}>
+                  <span style={{ color: '#e5484d', fontWeight: 600 }}>
+                    {typeof order.discountAmount === 'number' &&
+                    Number.isFinite(order.discountAmount)
+                      ? `− ${formatOptionalPrice(order.discountAmount)}`
+                      : '—'}
+                  </span>
+                </Info>
+              )}
+
+              <Info
+                label={isPickup ? 'Самовывоз' : 'Доставка'}
+                value={
+                  order.deliveryPrice === 0
+                    ? 'Бесплатно'
+                    : formatOptionalPrice(order.deliveryPrice)
+                }
+              />
+            </div>
+
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '20px',
+                flexWrap: 'wrap',
+                marginTop: '16px',
+                padding: '18px 20px',
+                border: '1px solid var(--theme-elevation-300)',
+                borderLeft: '4px solid var(--theme-text)',
+                background: 'var(--theme-elevation-100)',
+              }}
+            >
+              <span
+                style={{
+                  fontSize: '14px',
+                  opacity: MUTED_OPACITY,
+                }}
+              >
+                Итого к оплате
+              </span>
+
+              <span
+                style={{
+                  fontSize: '22px',
+                  fontWeight: 700,
+                }}
+              >
+                {formatOptionalPrice(order.total)}
+              </span>
+            </div>
+          </div>
+        </Section>
       </main>
     </div>
   )

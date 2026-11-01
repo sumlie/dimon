@@ -1,15 +1,34 @@
 "use client";
+
 import dynamic from "next/dynamic";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { ArrowRight, X } from "lucide-react";
 
 import { Popup } from "@/shared/ui/popup";
+import { useCartStore } from "../";
+
+type DeliveryRegion =
+  | "belarus"
+  | "moscow"
+  | "russia"
+  | "cis"
+  | "world";
+
+type DeliveryPrices = Record<DeliveryRegion, number>;
+
+type Fulfillment = "delivery" | "pickup";
+
+type CheckoutResult = {
+  id: string | number;
+  total: number;
+};
 
 type CheckoutDialogProps = {
   disabled?: boolean;
   totalRub: number;
   totalByn: number;
+  onSuccess: (result: CheckoutResult) => void;
 };
 
 type CdekPoint = {
@@ -17,7 +36,23 @@ type CdekPoint = {
   address: string;
 };
 
-const CDEK_DELIVERY_RUB = 700;
+type AppliedPromo = {
+  code: string;
+  discountPercent: number;
+};
+
+const PICKUP_ADDRESS = "Минск, проспект Машерова, 60";
+
+const DELIVERY_REGIONS: {
+  value: DeliveryRegion;
+  label: string;
+}[] = [
+  { value: "belarus", label: "Беларусь" },
+  { value: "moscow", label: "Москва и Московская область" },
+  { value: "russia", label: "Другие регионы России" },
+  { value: "cis", label: "Страны СНГ" },
+  { value: "world", label: "Остальной мир" },
+];
 
 const inputClassName =
   "w-full border border-black/20 bg-white px-4 py-3 font-sans text-sm text-black outline-none transition-colors placeholder:text-black/30 focus:border-black";
@@ -29,6 +64,22 @@ const formatPrice = (value: number) =>
   new Intl.NumberFormat("ru-RU", {
     maximumFractionDigits: 2,
   }).format(value);
+
+function isDeliveryPrices(value: unknown): value is DeliveryPrices {
+  if (!value || typeof value !== "object") return false;
+
+  const prices = value as Record<string, unknown>;
+
+  return DELIVERY_REGIONS.every(({ value: region }) => {
+    const price = prices[region];
+
+    return (
+      typeof price === "number" &&
+      Number.isFinite(price) &&
+      price >= 0
+    );
+  });
+}
 
 const CdekMap = dynamic(() => import("./cdek-widget"), {
   ssr: false,
@@ -43,44 +94,358 @@ export function CheckoutDialog({
   disabled = false,
   totalRub,
   totalByn,
+  onSuccess,
 }: CheckoutDialogProps) {
   const [open, setOpen] = useState(false);
-  const [deliveryMethod, setDeliveryMethod] = useState("");
-  const [cdekPoint, setCdekPoint] = useState<CdekPoint | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const deliveryRub = deliveryMethod === "cdek" ? CDEK_DELIVERY_RUB : 0;
-  const orderTotalRub = totalRub + deliveryRub;
+  const items = useCartStore((state) => state.items);
+  const clearCart = useCartStore((state) => state.clearCart);
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const [fulfillment, setFulfillment] =
+    useState<Fulfillment>("delivery");
+
+  const [deliveryRegion, setDeliveryRegion] = useState<
+    DeliveryRegion | ""
+  >("");
+
+  const [deliveryMethod, setDeliveryMethod] = useState("");
+  const [cdekPoint, setCdekPoint] = useState<CdekPoint | null>(null);
+
+  const [deliveryPrices, setDeliveryPrices] =
+    useState<DeliveryPrices | null>(null);
+
+  const [deliveryPricesLoading, setDeliveryPricesLoading] =
+    useState(false);
+
+  const [deliveryPricesError, setDeliveryPricesError] = useState<
+    string | null
+  >(null);
+
+  const [promoCode, setPromoCode] = useState("");
+  const [appliedPromo, setAppliedPromo] =
+    useState<AppliedPromo | null>(null);
+
+  const [promoLoading, setPromoLoading] = useState(false);
+  const [promoError, setPromoError] = useState<string | null>(null);
+
+  const promoRequestRef = useRef(0);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const controller = new AbortController();
+
+    async function loadDeliveryPrices() {
+      setDeliveryPricesLoading(true);
+      setDeliveryPricesError(null);
+      setDeliveryPrices(null);
+
+      try {
+        const response = await fetch("/api/auth/delivery-prices", {
+          cache: "no-store",
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          throw new Error("Не удалось загрузить стоимость доставки.");
+        }
+
+        const data: unknown = await response.json();
+
+        if (!isDeliveryPrices(data)) {
+          throw new Error("Сервер вернул некорректные цены доставки.");
+        }
+
+        if (!controller.signal.aborted) {
+          setDeliveryPrices(data);
+        }
+      } catch (err) {
+        if (controller.signal.aborted) return;
+
+        setDeliveryPricesError(
+          err instanceof Error
+            ? err.message
+            : "Не удалось загрузить стоимость доставки.",
+        );
+      } finally {
+        if (!controller.signal.aborted) {
+          setDeliveryPricesLoading(false);
+        }
+      }
+    }
+
+    void loadDeliveryPrices();
+
+    return () => controller.abort();
+  }, [open]);
+
+  const cdekCountry =
+    deliveryRegion === "belarus"
+      ? "BY"
+      : deliveryRegion === "moscow" || deliveryRegion === "russia"
+        ? "RU"
+        : null;
+
+  const deliveryRub =
+    fulfillment === "pickup"
+      ? 0
+      : deliveryRegion && deliveryPrices
+        ? deliveryPrices[deliveryRegion]
+        : null;
+
+  const discountPercent = appliedPromo?.discountPercent ?? 0;
+
+  const discountRub =
+    Math.round((totalRub * 100 * discountPercent) / 100) / 100;
+
+  const discountByn =
+    Math.round((totalByn * 100 * discountPercent) / 100) / 100;
+
+  const orderTotalRub =
+    deliveryRub === null
+      ? null
+      : Math.round(
+          (totalRub - discountRub + deliveryRub) * 100,
+        ) / 100;
+
+  const orderTotalByn =
+    Math.round((totalByn - discountByn) * 100) / 100;
+
+  const changeFulfillment = (next: Fulfillment) => {
+    setFulfillment(next);
+    setDeliveryRegion("");
+    setDeliveryMethod("");
+    setCdekPoint(null);
+    setError(null);
+  };
+
+  const applyPromoCode = async () => {
+    const code = promoCode.trim().toUpperCase();
+
+    if (!code) {
+      setAppliedPromo(null);
+      setPromoError("Введи промокод.");
+      return;
+    }
+
+    const requestId = ++promoRequestRef.current;
+
+    setPromoLoading(true);
+    setPromoError(null);
+    setAppliedPromo(null);
+
+    try {
+      const response = await fetch("/api/auth/promocode", {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ code }),
+      });
+
+      const data: unknown = await response.json();
+
+      if (!response.ok) {
+        const message =
+          data &&
+          typeof data === "object" &&
+          "error" in data &&
+          typeof data.error === "string"
+            ? data.error
+            : "Не удалось проверить промокод.";
+
+        throw new Error(message);
+      }
+
+      if (
+        !data ||
+        typeof data !== "object" ||
+        !("code" in data) ||
+        typeof data.code !== "string" ||
+        !("discountPercent" in data) ||
+        typeof data.discountPercent !== "number" ||
+        !Number.isFinite(data.discountPercent) ||
+        data.discountPercent < 1 ||
+        data.discountPercent > 100
+      ) {
+        throw new Error("Сервер вернул некорректный ответ.");
+      }
+
+      if (requestId !== promoRequestRef.current) return;
+
+      setPromoCode(data.code);
+
+      setAppliedPromo({
+        code: data.code,
+        discountPercent: data.discountPercent,
+      });
+    } catch (err) {
+      if (requestId !== promoRequestRef.current) return;
+
+      setPromoError(
+        err instanceof Error
+          ? err.message
+          : "Не удалось проверить промокод.",
+      );
+    } finally {
+      if (requestId === promoRequestRef.current) {
+        setPromoLoading(false);
+      }
+    }
+  };
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
+    if (submitting) return;
+
     setError(null);
 
-    const formData = new FormData(event.currentTarget);
+    if (items.length === 0) {
+      setError("Корзина пуста.");
+      return;
+    }
 
-    if (deliveryMethod === "cdek" && !cdekPoint) {
-      setError("Выбери пункт выдачи СДЭК на карте.");
+    if (fulfillment === "delivery") {
+      if (!deliveryRegion || deliveryRub === null) {
+        setError("Выбери регион доставки.");
+        return;
+      }
+
+      if (!deliveryMethod) {
+        setError("Выбери способ доставки.");
+        return;
+      }
+
+      if (deliveryMethod === "cdek" && cdekCountry && !cdekPoint) {
+        setError("Выбери пункт выдачи СДЭК на карте.");
+        return;
+      }
+    }
+
+    if (promoLoading) {
+      setError("Дождись проверки промокода.");
+      return;
+    }
+
+    if (promoCode.trim() && !appliedPromo) {
+      setError("Примени промокод или очисти поле.");
+      return;
+    }
+
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+
+    const checkoutItems = items.map((item) => ({
+      product: Number(item.productId),
+      quantity: item.quantity,
+    }));
+
+    if (
+      checkoutItems.some(
+        (item) =>
+          !Number.isSafeInteger(item.product) ||
+          item.product <= 0 ||
+          !Number.isSafeInteger(item.quantity) ||
+          item.quantity <= 0,
+      )
+    ) {
+      setError("Не удалось прочитать товары в корзине. Обнови страницу.");
       return;
     }
 
     const checkoutData = {
-      customerName: String(formData.get("customerName") ?? "").trim(),
+      items: checkoutItems,
+
+      customerName: String(
+        formData.get("customerName") ?? "",
+      ).trim(),
+
       email: String(formData.get("email") ?? "").trim(),
       username: String(formData.get("username") ?? "").trim(),
       phone: String(formData.get("phone") ?? "").trim(),
-      deliveryMethod,
+
+      deliveryRegion:
+        fulfillment === "pickup" ? "belarus" : deliveryRegion,
+
+      deliveryMethod:
+        fulfillment === "pickup" ? "pickup" : deliveryMethod,
+
       deliveryAddress:
-        deliveryMethod === "cdek"
-          ? cdekPoint?.address ?? ""
-          : String(formData.get("deliveryAddress") ?? "").trim(),
+        fulfillment === "pickup"
+          ? PICKUP_ADDRESS
+          : deliveryMethod === "cdek" && cdekCountry
+            ? cdekPoint?.address ?? ""
+            : String(formData.get("deliveryAddress") ?? "").trim(),
+
       cdekPointCode:
-        deliveryMethod === "cdek" ? cdekPoint?.code ?? null : null,
+        fulfillment === "delivery" &&
+        deliveryMethod === "cdek" &&
+        cdekCountry
+          ? cdekPoint?.code ?? ""
+          : "",
+
       comment: String(formData.get("comment") ?? "").trim(),
+
+      promoCode: appliedPromo?.code ?? "",
     };
 
-    // Пока форма не отправляет заказ.
-    // Позже подключим запрос к серверу.
-    console.log("Данные оформления:", checkoutData);
+    setSubmitting(true);
+
+    try {
+      const response = await fetch("/api/auth/checkout", {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(checkoutData),
+      });
+
+      const result = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(
+          typeof result?.error === "string"
+            ? result.error
+            : "Не удалось оформить заказ.",
+        );
+      }
+
+      if (!result || result.id == null) {
+        throw new Error("Сервер вернул некорректный ответ.");
+      }
+
+      setOpen(false);
+      form.reset();
+
+      setFulfillment("delivery");
+      setDeliveryRegion("");
+      setDeliveryMethod("");
+      setCdekPoint(null);
+
+      setPromoCode("");
+      setAppliedPromo(null);
+      setPromoError(null);
+
+      onSuccess({
+        id: result.id,
+        total: result.total,
+      });
+
+      clearCart();
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Не удалось оформить заказ. Попробуй ещё раз.",
+      );
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -89,7 +454,7 @@ export function CheckoutDialog({
         type="button"
         disabled={disabled}
         onClick={() => setOpen(true)}
-        className="group mt-6 flex w-full items-center justify-between gap-4 border border-black bg-black px-6 py-4 font-sans text-base font-extrabold lowercase text-white transition-colors hover:bg-white hover:text-black disabled:cursor-not-allowed disabled:border-black/20 disabled:bg-black/20 disabled:text-white"
+        className="group mt-6 flex w-full cursor-pointer items-center justify-between gap-4 border border-black bg-black px-6 py-4 font-sans text-base font-extrabold lowercase text-white transition-colors hover:bg-white hover:text-black disabled:cursor-not-allowed disabled:border-black/20 disabled:bg-black/20 disabled:text-white"
       >
         оформить заказ
 
@@ -102,7 +467,9 @@ export function CheckoutDialog({
 
       <Popup
         open={open}
-        onClose={() => setOpen(false)}
+        onClose={() => {
+          if (!submitting) setOpen(false);
+        }}
         title="Оформление заказа"
         description="Заполни контактные данные и адрес доставки"
         contentClassName="max-w-2xl bg-white"
@@ -120,9 +487,12 @@ export function CheckoutDialog({
 
           <button
             type="button"
-            onClick={() => setOpen(false)}
+            disabled={submitting}
+            onClick={() => {
+              if (!submitting) setOpen(false);
+            }}
             aria-label="закрыть оформление заказа"
-            className="flex h-9 w-9 shrink-0 items-center justify-center border border-black text-black transition-colors hover:bg-black hover:text-white"
+            className="flex h-9 w-9 shrink-0 items-center justify-center border border-black text-black transition-colors hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
           >
             <X size={19} strokeWidth={1.5} />
           </button>
@@ -194,90 +564,212 @@ export function CheckoutDialog({
           <div className="mt-8 border-t border-black/20 pt-6">
             <div className="flex items-center justify-between gap-4">
               <h3 className="font-sans text-lg font-extrabold lowercase">
-                доставка
+                получение
               </h3>
 
-              {deliveryMethod === "cdek" && (
+              {deliveryRub !== null && (
                 <span className="font-sans text-sm lowercase text-red-600">
-                  + {formatPrice(CDEK_DELIVERY_RUB)} rub
+                  {deliveryRub === 0
+                    ? "бесплатно"
+                    : `+ ${formatPrice(deliveryRub)} rub`}
                 </span>
               )}
             </div>
 
-            <label className={`${labelClassName} mt-5`}>
-              <span>
-                способ доставки <span className="text-red-600">*</span>
-              </span>
-
-              <select
-                name="deliveryMethod"
-                required
-                value={deliveryMethod}
-                onChange={(event) => {
-                  setDeliveryMethod(event.target.value);
-                  setCdekPoint(null);
-                  setError(null);
-                }}
-                className={inputClassName}
+            <div
+              role="group"
+              aria-label="Способ получения заказа"
+              className="mt-5 flex border-b border-black/20"
+            >
+              <button
+                type="button"
+                aria-pressed={fulfillment === "delivery"}
+                onClick={() => changeFulfillment("delivery")}
+                className={`-mb-px border-b-2 px-1 pb-3 font-sans text-sm font-bold lowercase transition-colors ${
+                  fulfillment === "delivery"
+                    ? "border-black text-black"
+                    : "border-transparent text-black/40 hover:text-black"
+                }`}
               >
-                <option value="" disabled>
-                  выбери способ доставки
-                </option>
+                доставка
+              </button>
 
-                <option value="cdek">сдэк</option>
-                <option value="belmail">белпочта</option>
-                <option value="euromail">европочта</option>
-              </select>
-            </label>
+              <button
+                type="button"
+                aria-pressed={fulfillment === "pickup"}
+                onClick={() => changeFulfillment("pickup")}
+                className={`-mb-px ml-8 border-b-2 px-1 pb-3 font-sans text-sm font-bold lowercase transition-colors ${
+                  fulfillment === "pickup"
+                    ? "border-black text-black"
+                    : "border-transparent text-black/40 hover:text-black"
+                }`}
+              >
+                самовывоз
+              </button>
+            </div>
 
-            {deliveryMethod === "cdek" ? (
-              <div className="mt-5">
-                <p className="font-sans text-sm lowercase text-black">
-                  пункт выдачи <span className="text-red-600">*</span>
+            {fulfillment === "pickup" ? (
+              <div className="mt-5 border border-black/20 p-5 font-sans">
+                <p className="text-sm lowercase text-black/50">
+                  адрес самовывоза
                 </p>
 
-                <div className="mt-2">
-                  <CdekMap
-                    onChoose={(point) => {
-                      setCdekPoint({
-                        code: point.code,
-                        address: point.address,
-                      });
+                <p className="mt-2 text-base font-bold text-black">
+                  {PICKUP_ADDRESS}
+                </p>
 
+                <p className="mt-2 text-sm lowercase leading-relaxed text-black/50">
+                  детали получения уточним после оформления заказа
+                </p>
+              </div>
+            ) : (
+              <>
+                <label className={`${labelClassName} mt-5`}>
+                  <span>
+                    регион доставки{" "}
+                    <span className="text-red-600">*</span>
+                  </span>
+
+                  <select
+                    required
+                    value={deliveryRegion}
+                    disabled={deliveryPricesLoading || !deliveryPrices}
+                    onChange={(event) => {
+                      setDeliveryRegion(
+                        event.target.value as DeliveryRegion | "",
+                      );
+                      setCdekPoint(null);
                       setError(null);
                     }}
-                  />
-                </div>
+                    className={inputClassName}
+                  >
+                    <option value="" disabled>
+                      {deliveryPricesLoading
+                        ? "загружаем регионы..."
+                        : "выбери регион доставки"}
+                    </option>
 
-                <label className={`${labelClassName} mt-4`}>
-                  выбранный пункт
+                    {DELIVERY_REGIONS.map((region) => {
+                      const price = deliveryPrices?.[region.value];
 
-                  <input
-                    type="text"
-                    value={cdekPoint?.address ?? ""}
-                    readOnly
-                    placeholder="выбери пункт на карте"
-                    className={`${inputClassName} bg-neutral-50`}
-                  />
+                      return (
+                        <option key={region.value} value={region.value}>
+                          {region.label}
+                          {price != null
+                            ? price === 0
+                              ? " — бесплатно"
+                              : ` — ${formatPrice(price)} rub`
+                            : ""}
+                        </option>
+                      );
+                    })}
+                  </select>
                 </label>
-              </div>
-            ) : deliveryMethod ? (
-              <label className={`${labelClassName} mt-5`}>
-                <span>
-                  адрес или пункт выдачи{" "}
-                  <span className="text-red-600">*</span>
-                </span>
 
-                <textarea
-                  name="deliveryAddress"
-                  required
-                  maxLength={500}
-                  rows={3}
-                  placeholder="страна, город, адрес или адрес пункта выдачи"
-                  className={`${inputClassName} resize-y`}
-                />
-              </label>
-            ) : null}
+                {deliveryPricesError && (
+                  <p
+                    role="alert"
+                    className="mt-2 font-sans text-sm text-red-600"
+                  >
+                    {deliveryPricesError} Закрой и открой оформление
+                    заказа ещё раз.
+                  </p>
+                )}
+
+                <label className={`${labelClassName} mt-5`}>
+                  <span>
+                    способ доставки{" "}
+                    <span className="text-red-600">*</span>
+                  </span>
+
+                  <select
+                    name="deliveryMethod"
+                    required
+                    value={deliveryMethod}
+                    onChange={(event) => {
+                      setDeliveryMethod(event.target.value);
+                      setCdekPoint(null);
+                      setError(null);
+                    }}
+                    className={inputClassName}
+                  >
+                    <option value="" disabled>
+                      выбери способ доставки
+                    </option>
+
+                    <option value="cdek">сдэк</option>
+                    <option value="belmail">белпочта</option>
+                    <option value="euromail">европочта</option>
+                  </select>
+                </label>
+
+                {deliveryMethod === "cdek" && (
+                  <div className="mt-5">
+                    {cdekCountry ? (
+                      <>
+                        <p className="font-sans text-sm lowercase text-black">
+                          пункт выдачи{" "}
+                          <span className="text-red-600">*</span>
+                        </p>
+
+                        <div className="mt-2">
+                          <CdekMap
+                            key={deliveryRegion}
+                            country={cdekCountry}
+                            onChoose={(point) => {
+                              setCdekPoint({
+                                code: point.code,
+                                address: point.address,
+                              });
+
+                              setError(null);
+                            }}
+                          />
+                        </div>
+
+                        <label className={`${labelClassName} mt-4`}>
+                          выбранный пункт
+
+                          <input
+                            type="text"
+                            value={cdekPoint?.address ?? ""}
+                            readOnly
+                            placeholder="выбери пункт на карте"
+                            className={`${inputClassName} bg-neutral-50`}
+                          />
+                        </label>
+                      </>
+                    ) : (
+                      <p className="font-sans text-sm leading-relaxed text-black/50">
+                        {deliveryRegion
+                          ? "Выбор пункта СДЭК для этого региона пока не подключён. Укажи адрес ниже."
+                          : "Сначала выбери регион доставки."}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {deliveryMethod &&
+                  (deliveryMethod !== "cdek" ||
+                    (deliveryRegion && !cdekCountry)) && (
+                    <label className={`${labelClassName} mt-5`}>
+                      <span>
+                        адрес или пункт выдачи{" "}
+                        <span className="text-red-600">*</span>
+                      </span>
+
+                      <textarea
+                        name="deliveryAddress"
+                        required
+                        maxLength={500}
+                        rows={3}
+                        placeholder="страна, город, адрес или адрес пункта выдачи"
+                        className={`${inputClassName} resize-y`}
+                      />
+                    </label>
+                  )}
+              </>
+            )}
           </div>
 
           <label className={`${labelClassName} mt-6`}>
@@ -292,6 +784,62 @@ export function CheckoutDialog({
             />
           </label>
 
+          <div className="mt-8 border-t border-black/20 pt-6">
+            <label
+              htmlFor="promo-code"
+              className="font-sans text-sm lowercase text-black"
+            >
+              промокод
+            </label>
+
+            <div className="mt-2 flex gap-2">
+              <input
+                id="promo-code"
+                type="text"
+                value={promoCode}
+                onChange={(event) => {
+                  promoRequestRef.current += 1;
+                  setPromoLoading(false);
+                  setPromoCode(event.target.value);
+                  setAppliedPromo(null);
+                  setPromoError(null);
+                }}
+                maxLength={40}
+                autoComplete="off"
+                placeholder="введи промокод"
+                className="min-w-0 flex-1 border border-black/20 bg-white px-4 py-3 font-sans text-sm uppercase text-black outline-none transition-colors placeholder:normal-case placeholder:text-black/30 focus:border-black"
+              />
+
+              <button
+                type="button"
+                disabled={promoLoading}
+                onClick={() => void applyPromoCode()}
+                className="shrink-0 border border-black bg-black px-4 font-sans text-sm font-bold lowercase text-white transition-colors hover:bg-white hover:text-black disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {promoLoading ? "проверяем…" : "применить"}
+              </button>
+            </div>
+
+            {appliedPromo && (
+              <p
+                role="status"
+                className="mt-2 font-sans text-sm text-black/60"
+              >
+                промокод {appliedPromo.code} принят — скидка{" "}
+                {appliedPromo.discountPercent}%
+              </p>
+            )}
+
+            {promoError && (
+              <p
+                role="alert"
+                className="mt-2 font-sans text-sm text-red-600"
+              >
+                {promoError}
+              </p>
+            )}
+          </div>
+
           <div className="mt-8 border-t-2 border-black pt-5 font-sans lowercase">
             <div className="flex items-center justify-between gap-4 text-sm text-black/50">
               <span>товары</span>
@@ -301,18 +849,35 @@ export function CheckoutDialog({
               </span>
             </div>
 
-            <div className="mt-3 flex items-center justify-between gap-4 text-sm">
-              <span className="text-black/50">доставка</span>
-
-              {deliveryMethod === "cdek" ? (
-                <span className="text-red-600">
-                  + {formatPrice(deliveryRub)} rub
-                </span>
-              ) : (
+            {appliedPromo && (
+              <div className="mt-3 flex items-center justify-between gap-4 text-sm">
                 <span className="text-black/50">
-                  {deliveryMethod ? "бесплатно" : "не выбрана"}
+                  скидка {appliedPromo.discountPercent}%
                 </span>
-              )}
+
+                <span className="text-right text-red-600">
+                  − {formatPrice(discountByn)} byn /{" "}
+                  {formatPrice(discountRub)} rub
+                </span>
+              </div>
+            )}
+
+            <div className="mt-3 flex items-center justify-between gap-4 text-sm">
+              <span className="text-black/50">
+                {fulfillment === "pickup" ? "самовывоз" : "доставка"}
+              </span>
+
+              <span
+                className={
+                  deliveryRub ? "text-red-600" : "text-black/50"
+                }
+              >
+                {deliveryRub === null
+                  ? "не выбрана"
+                  : deliveryRub === 0
+                    ? "бесплатно"
+                    : `+ ${formatPrice(deliveryRub)} rub`}
+              </span>
             </div>
 
             <div className="mt-4 flex items-start justify-between gap-4 border-t border-black/20 pt-4">
@@ -320,10 +885,12 @@ export function CheckoutDialog({
 
               <div className="text-right">
                 <p className="text-xl font-extrabold">
-                  {formatPrice(totalByn)} byn / {formatPrice(orderTotalRub)} rub
+                  {orderTotalRub === null
+                    ? "выбери регион"
+                    : `${formatPrice(orderTotalByn)} byn / ${formatPrice(orderTotalRub)} rub`}
                 </p>
 
-                {deliveryMethod === "cdek" && (
+                {deliveryRub !== null && deliveryRub > 0 && (
                   <p className="mt-1 text-xs text-black/50">
                     сумма в byn указана без доставки
                   </p>
@@ -343,9 +910,13 @@ export function CheckoutDialog({
 
           <button
             type="submit"
-            className="group mt-8 flex w-full items-center justify-between gap-4 border border-black bg-black px-6 py-4 font-sans text-base font-extrabold lowercase text-white transition-colors hover:bg-white hover:text-black"
+            disabled={
+              submitting ||
+              (fulfillment === "delivery" && deliveryPricesLoading)
+            }
+            className="group mt-8 flex w-full cursor-pointer items-center justify-between gap-4 border border-black bg-black px-6 py-4 font-sans text-base font-extrabold lowercase text-white transition-colors hover:bg-white hover:text-black disabled:cursor-not-allowed disabled:opacity-50"
           >
-            подтвердить заказ
+            {submitting ? "оформляем заказ..." : "подтвердить заказ"}
 
             <ArrowRight
               size={20}
@@ -353,10 +924,6 @@ export function CheckoutDialog({
               className="shrink-0 transition-transform group-hover:-rotate-45"
             />
           </button>
-
-          <p className="mt-3 font-sans text-xs leading-relaxed text-black/50">
-            Пока форма работает в тестовом режиме и не отправляет заказ.
-          </p>
         </form>
       </Popup>
     </>

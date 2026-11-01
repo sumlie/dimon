@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { ArrowRight, Minus, Plus } from "lucide-react";
-import { Button } from "@/shared/ui/button";
+import { Button, buttonVariants } from "@/shared/ui/button";
 
 import { useCartStore } from "../";
+import { cn } from "@/shared/lib/cn";
 
 type AddToCartButtonProps = {
   productId: string;
@@ -29,11 +30,18 @@ export function AddToCartButton({ productId }: AddToCartButtonProps) {
 
   if (currentQuantity === 0) {
     return (
-      <Button
+      <button
         type="button"
         onClick={() => addItem(productId)}
         disabled={!mounted}
-        className="group mt-8 flex w-full items-center justify-between border border-black bg-black px-6 py-4 text-base font-extrabold lowercase text-white transition-colors hover:bg-white hover:text-black"
+        className={cn(
+          buttonVariants({
+            variant: "default",
+            size: "inherit",
+            pd: "none",
+          }),
+          "group mt-8 flex min-h-14 w-full items-center justify-between border border-black bg-black px-6 py-4 text-base font-extrabold cursor-pointerlowercase text-white transition-colors hover:bg-white hover:text-black disabled:cursor-not-allowed disabled:opacity-50",
+        )}
       >
         купить
 
@@ -42,7 +50,7 @@ export function AddToCartButton({ productId }: AddToCartButtonProps) {
           strokeWidth={1.5}
           className="transition-transform group-hover:-rotate-45"
         />
-      </Button>
+      </button>
     );
   }
 

@@ -87,6 +87,45 @@ export const Orders: CollectionConfig = {
       ],
     },
     {
+      name: 'promoCode',
+      type: 'text',
+      label: 'Промокод',
+      admin: {
+        readOnly: true,
+      },
+    },
+    {
+      name: 'discountPercent',
+      type: 'number',
+      label: 'Скидка (%)',
+      min: 0,
+      max: 100,
+      defaultValue: 0,
+      admin: {
+        readOnly: true,
+      },
+    },
+    {
+      name: 'discountAmount',
+      type: 'number',
+      label: 'Сумма скидки (RUB)',
+      min: 0,
+      defaultValue: 0,
+      admin: {
+        readOnly: true,
+      },
+    },
+    {
+      name: 'deliveryPrice',
+      type: 'number',
+      label: 'Стоимость доставки (RUB)',
+      min: 0,
+      defaultValue: 0,
+      admin: {
+        readOnly: true,
+      },
+    },
+    {
       name: 'total',
       type: 'number',
       required: true,
@@ -138,6 +177,21 @@ export const Orders: CollectionConfig = {
       name: 'phone',
       type: 'text',
       label: 'Телефон',
+    },
+    {
+      name: 'deliveryRegion',
+      type: 'select',
+      label: 'Регион доставки',
+      options: [
+        { label: 'Беларусь', value: 'belarus' },
+        { label: 'Москва и Московская область', value: 'moscow' },
+        { label: 'Другие регионы России', value: 'russia' },
+        { label: 'Страны СНГ', value: 'cis' },
+        { label: 'Остальной мир', value: 'world' },
+      ],
+      admin: {
+        readOnly: true,
+      },
     },
     {
       name: 'deliveryMethod',

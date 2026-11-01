@@ -7,6 +7,9 @@ import { ArrowRight, Minus, Plus, Trash2 } from "lucide-react";
 import type { Product } from "@/entities/product/model/types";
 import { BackButton } from "@/shared/ui/back-button";
 import { Button } from "@/shared/ui/button";
+import { useState } from "react";
+import { Check, X } from "lucide-react";
+import { Popup } from "@/shared/ui/popup";
 
 import { CheckoutDialog, useCartStore } from "..";
 
@@ -32,6 +35,11 @@ export function Cart({ products }: CartPageProps) {
   const setQuantity = useCartStore((state) => state.setQuantity);
   const removeItem = useCartStore((state) => state.removeItem);
   const clearCart = useCartStore((state) => state.clearCart);
+
+  const [completedOrder, setCompletedOrder] = useState<{
+    id: string | number;
+    total: number;
+  } | null>(null);
 
   const productsById = new Map(
     products.map((product) => [product.id, product]),
@@ -285,6 +293,7 @@ export function Cart({ products }: CartPageProps) {
               disabled={availableItems.length === 0 || unavailableItems.length > 0}
               totalRub={totalRub}
               totalByn={totalByn}
+              onSuccess={(order) => setCompletedOrder(order)}
             />
 
             <p className="mt-4 font-sans text-sm leading-relaxed lowercase text-black/50">
@@ -293,6 +302,58 @@ export function Cart({ products }: CartPageProps) {
           </aside>
         </div>
       )}
+      <Popup
+        open={completedOrder !== null}
+        onClose={() => setCompletedOrder(null)}
+        title="Заказ оформлен"
+        description="Заказ успешно создан"
+        contentClassName="w-full max-w-md bg-white"
+      >
+        <div className="relative px-5 py-6 sm:px-8 sm:py-8">
+          <button
+            type="button"
+            onClick={() => setCompletedOrder(null)}
+            aria-label="закрыть"
+            className="absolute right-5 top-6 flex h-9 w-9 items-center justify-center border border-black text-black transition-colors hover:bg-black hover:text-white sm:right-8 sm:top-8"
+          >
+            <X size={19} strokeWidth={1.5} />
+          </button>
+
+          <div className="pr-12">
+            <p className="font-sans text-sm lowercase text-black/50">
+              заказ №{completedOrder?.id}
+            </p>
+
+            <h2 className="mt-2 font-sans text-3xl font-extrabold lowercase tracking-tight text-black">
+              всё получилось
+            </h2>
+          </div>
+
+          <p className="mt-3 font-sans text-sm lowercase leading-relaxed text-black/50">
+            заказ оформлен. скоро мы свяжемся с тобой, чтобы уточнить детали
+          </p>
+
+          <div className="mt-8 flex items-center justify-between gap-4 border-t border-black/20 pt-5 font-sans lowercase">
+            <span className="text-sm text-black/50">итого</span>
+
+            <span className="text-lg font-extrabold text-black">
+              {completedOrder &&
+              typeof completedOrder.total === "number" &&
+              Number.isFinite(completedOrder.total)
+                ? `${formatPrice(completedOrder.total)} rub`
+                : "уточним при связи"}
+            </span>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setCompletedOrder(null)}
+            className="mt-8 flex min-h-14 w-full items-center justify-center border border-black bg-black px-6 py-4 font-sans text-base font-extrabold lowercase text-white transition-colors hover:bg-white hover:text-black"
+          >
+            отлично
+          </button>
+        </div>
+      </Popup>
     </section>
   );
 }
