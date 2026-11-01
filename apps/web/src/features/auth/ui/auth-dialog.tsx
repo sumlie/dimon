@@ -1,10 +1,13 @@
 "use client";
 
-import { X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { ArrowRight, X } from "lucide-react";
+import Link from "next/link";
 import { RiGoogleFill, RiTelegram2Fill } from "react-icons/ri";
+
 import { Button } from "@/shared/ui/button/button";
 import { Popup } from "@/shared/ui/popup";
+
 import { oauthStartUrl, startTelegram } from "../api/auth";
 import { authErrorText } from "../model/error-text";
 
@@ -30,13 +33,16 @@ function TelegramWidget({
     if (!node) return;
 
     node.innerHTML = "";
+
     const script = document.createElement("script");
+
     script.src = "https://telegram.org/js/telegram-widget.js?22";
     script.async = true;
     script.setAttribute("data-telegram-login", botUsername);
     script.setAttribute("data-size", "large");
     script.setAttribute("data-auth-url", authUrl);
     script.setAttribute("data-request-access", "write");
+
     node.appendChild(script);
 
     return () => {
@@ -56,10 +62,12 @@ export function AuthDialog({
 }: Props) {
   const [consent, setConsent] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
   const [telegram, setTelegram] = useState<{
     botUsername: string;
     authUrl: string;
   } | null>(null);
+
   const [telegramLoading, setTelegramLoading] = useState(false);
 
   useEffect(() => {
@@ -86,7 +94,7 @@ export function AuthDialog({
 
   const beginOAuth = (provider: "google" | "yandex") => {
     if (!consent) {
-      setError("Подтвердите согласие на обработку данных.");
+      setError("Подтверди согласие на обработку данных.");
       return;
     }
 
@@ -95,7 +103,7 @@ export function AuthDialog({
 
   const beginTelegram = async () => {
     if (!consent) {
-      setError("Подтвердите согласие на обработку данных.");
+      setError("Подтверди согласие на обработку данных.");
       return;
     }
 
@@ -103,116 +111,182 @@ export function AuthDialog({
     setError(null);
 
     try {
-      setTelegram(await startTelegram(target, mode));
+      const result = await startTelegram(target, mode);
+      setTelegram(result);
     } catch (err) {
-      const code = err instanceof Error ? err.message : "internal_error";
+      const code =
+        err instanceof Error ? err.message : "internal_error";
+
       setError(authErrorText(code));
     } finally {
       setTelegramLoading(false);
     }
   };
 
+  const isLinkMode = mode === "link";
+
   return (
     <Popup
       open={open}
       onClose={onClose}
-      title={mode === "link" ? "Привязать аккаунт" : "Вход в аккаунт"}
-      contentClassName="max-w-md"
+      title={isLinkMode ? "Привязать сервис" : "Вход в аккаунт"}
+      description={
+        isLinkMode
+          ? "Выбери сервис для привязки к аккаунту"
+          : "Выбери удобный способ входа"
+      }
+      contentClassName="w-full max-w-md bg-white"
     >
-      <div className="relative w-full border-2 border-black bg-white p-6 sm:p-8">
+      <div className="relative px-5 py-6 sm:px-8 sm:py-8">
         <button
           type="button"
           onClick={onClose}
-          aria-label="Закрыть"
-          className="absolute right-4 top-4 text-black transition-colors hover:text-red-600"
+          aria-label="закрыть"
+          className="absolute right-5 top-6 flex h-9 w-9 items-center justify-center border border-black text-black transition-colors hover:bg-black hover:text-white sm:right-8 sm:top-8"
         >
-          <X size={22} />
+          <X size={19} strokeWidth={1.5} />
         </button>
 
-        <h2
-          id="auth-dialog-title"
-          className="mb-1 font-display text-4xl uppercase leading-none"
-        >
-          {mode === "link" ? "привязать" : "войти"}
-        </h2>
-        <p className="mb-6 font-sans text-sm text-black/60">
-          {mode === "link"
-            ? "Выберите сервис, чтобы привязать его к аккаунту."
-            : "Войдите через удобный сервис. Email нужен только для связи."}
-        </p>
-
-        <div className="flex flex-col gap-3">
-          <Button
-            type="button"
-            variant="outline"
-            pd="sm"
-            className="w-full justify-start gap-3 normal-case"
-            onClick={() => beginOAuth("google")}
-          >
-            <RiGoogleFill size={22} />
-            <span>Продолжить с Google</span>
-          </Button>
-
-          <Button
-            type="button"
-            variant="outline"
-            pd="sm"
-            className="w-full justify-start gap-3 normal-case"
-            onClick={() => beginOAuth("yandex")}
-          >
-            <span className="flex h-[22px] w-[22px] items-center justify-center border border-black text-xs font-bold">
-              Я
-            </span>
-            <span>Продолжить с Яндексом</span>
-          </Button>
-
-          <Button
-            type="button"
-            variant="outline"
-            pd="sm"
-            className="w-full justify-start gap-3 normal-case"
-            disabled={telegramLoading}
-            onClick={() => void beginTelegram()}
-          >
-            <RiTelegram2Fill size={22} />
-            <span>
-              {telegramLoading
-                ? "Загружаем Telegram…"
-                : "Продолжить с Telegram"}
-            </span>
-          </Button>
-
-          {telegram ? (
-            <div className="border border-black/10 bg-black/[0.02] p-4">
-              <p className="mb-3 text-center font-sans text-xs text-black/60">
-                Подтвердите вход в Telegram:
-              </p>
-              <TelegramWidget
-                botUsername={telegram.botUsername}
-                authUrl={telegram.authUrl}
-              />
-            </div>
-          ) : null}
+        <div className="pr-12">
+          <h2 className="font-sans text-3xl font-extrabold lowercase tracking-tight text-black">
+            {isLinkMode ? "привязать сервис" : "войти"}
+          </h2>
         </div>
 
-        <label className="mt-6 flex cursor-pointer items-start gap-3 font-sans text-xs leading-relaxed text-black/70">
-          <input
-            type="checkbox"
-            checked={consent}
-            onChange={(event) => setConsent(event.target.checked)}
-            className="mt-0.5 h-4 w-4 accent-black"
-          />
-          <span>
-            Я согласен на обработку персональных данных и принимаю правила
-            сервиса.
-          </span>
-        </label>
+        <p className="mt-3 font-sans text-sm lowercase leading-relaxed text-black/50">
+          {isLinkMode
+            ? "выбери сервис, который хочешь привязать к аккаунту"
+            : "выбери удобный способ входа в аккаунт"}
+        </p>
 
-        {error ? (
-          <p className="mt-4 border-l-2 border-red-600 pl-3 font-sans text-sm text-red-600">
-            {error}
-          </p>
-        ) : null}
+        <div className="mt-7 flex flex-col gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            pd="sm"
+            disabled={telegramLoading}
+            onClick={() => void beginTelegram()}
+            className="group flex min-h-14 w-full items-center justify-between gap-4 border border-black px-4 font-sans text-sm font-bold text-black transition-colors hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <span className="flex min-w-0 items-center gap-3">
+              <RiTelegram2Fill size={20} className="shrink-0" />
+
+              <span>
+                {telegramLoading
+                  ? "загружаем Telegram…"
+                  : "продолжить с Telegram"}
+              </span>
+            </span>
+
+            <ArrowRight
+              size={18}
+              strokeWidth={1.5}
+              className="shrink-0 transition-transform group-hover:-rotate-45"
+            />
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            pd="sm"
+            onClick={() => beginOAuth("google")}
+            className="group flex min-h-14 w-full items-center justify-between gap-4 border border-black px-4 font-sans text-sm font-bold text-black transition-colors hover:bg-black hover:text-white"
+          >
+            <span className="flex min-w-0 items-center gap-3">
+              <RiGoogleFill size={20} className="shrink-0" />
+
+              <span>продолжить с Google</span>
+            </span>
+
+            <ArrowRight
+              size={18}
+              strokeWidth={1.5}
+              className="shrink-0 transition-transform group-hover:-rotate-45"
+            />
+          </Button>
+
+          <Button
+            type="button"
+            variant="outline"
+            pd="sm"
+            onClick={() => beginOAuth("yandex")}
+            className="group flex min-h-14 w-full items-center justify-between gap-4 border border-black px-4 font-sans text-sm font-bold text-black transition-colors hover:bg-black hover:text-white"
+          >
+            <span className="flex min-w-0 items-center gap-3">
+              <span className="flex h-5 w-5 shrink-0 items-center justify-center text-xl font-bold">
+                Я
+              </span>
+
+              <span>продолжить с Яндексом</span>
+            </span>
+
+            <ArrowRight
+              size={18}
+              strokeWidth={1.5}
+              className="shrink-0 transition-transform group-hover:-rotate-45"
+            />
+          </Button>
+        </div>
+
+        {telegram && (
+          <div className="mt-4 border border-black/20 bg-neutral-50 p-5">
+            <p className="mb-4 text-center font-sans text-sm lowercase text-black/50">
+              подтверди вход в Telegram
+            </p>
+
+            <TelegramWidget
+              botUsername={telegram.botUsername}
+              authUrl={telegram.authUrl}
+            />
+          </div>
+        )}
+
+        <div className="mt-7 border-t border-black/20 pt-5">
+          <div className="flex items-start gap-3 font-sans text-xs leading-relaxed text-black/60">
+            <input
+              type="checkbox"
+              checked={consent}
+              onChange={(event) => {
+                setConsent(event.target.checked);
+
+                if (event.target.checked) {
+                  setError(null);
+                }
+              }}
+              aria-label="Согласие с пользовательским соглашением и политикой конфиденциальности"
+              className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-black"
+            />
+
+            <span>
+              я принимаю{" "}
+              <Link
+                href="/terms-of-use"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-black underline underline-offset-2 transition-colors hover:text-red-600"
+              >
+                пользовательское соглашение
+              </Link>{" "}
+              и соглашаюсь с{" "}
+              <Link
+                href="/privacy-policy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-black underline underline-offset-2 transition-colors hover:text-red-600"
+              >
+                политикой конфиденциальности
+              </Link>
+            </span>
+          </div>
+
+          {error && (
+            <p
+              role="alert"
+              className="mt-4 border-l-2 border-red-600 pl-3 font-sans text-sm text-red-600"
+            >
+              {error}
+            </p>
+          )}
+        </div>
       </div>
     </Popup>
   );

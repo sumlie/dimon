@@ -12,9 +12,9 @@ const ownerOrAdmin: Access = ({ req: { user } }) => {
 
 export const CustomerIdentities: CollectionConfig = {
   slug: 'customer-identities',
-  labels: { singular: 'Customer identity', plural: 'Customer identities' },
+  labels: { singular: 'Identity', plural: 'Identities' },
   admin: {
-    group: 'Shop',
+    group: 'Users',
     useAsTitle: 'providerId',
     defaultColumns: ['customer', 'provider', 'providerId', 'lastLoginAt'],
     description: 'External login providers linked to customers. Managed by the auth API.',

@@ -24,7 +24,7 @@ export const Customers: CollectionConfig = {
   },
 
   admin: {
-    group: 'Shop',
+    group: 'Users',
     useAsTitle: 'email',
     defaultColumns: ['email', 'name', 'phone', 'createdAt'],
   },
