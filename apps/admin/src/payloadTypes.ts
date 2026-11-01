@@ -89,6 +89,7 @@ export interface Config {
     orders: Order;
     customers: Customer;
     'customer-identities': CustomerIdentity;
+    'promo-codes': PromoCode;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -110,6 +111,7 @@ export interface Config {
     orders: OrdersSelect<false> | OrdersSelect<true>;
     customers: CustomersSelect<false> | CustomersSelect<true>;
     'customer-identities': CustomerIdentitiesSelect<false> | CustomerIdentitiesSelect<true>;
+    'promo-codes': PromoCodesSelect<false> | PromoCodesSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -121,12 +123,10 @@ export interface Config {
   };
   fallbackLocale: ('false' | 'none' | 'null') | false | null | 'en' | 'en'[];
   globals: {
-    'social-links': SocialLink;
-    'legal-settings': LegalSetting;
+    'delivery-prices': DeliveryPrice;
   };
   globalsSelect: {
-    'social-links': SocialLinksSelect<false> | SocialLinksSelect<true>;
-    'legal-settings': LegalSettingsSelect<false> | LegalSettingsSelect<true>;
+    'delivery-prices': DeliveryPricesSelect<false> | DeliveryPricesSelect<true>;
   };
   locale: 'en';
   widgets: {
@@ -500,6 +500,10 @@ export interface Order {
     unitPrice: number;
     id?: string | null;
   }[];
+  promoCode?: string | null;
+  discountPercent?: number | null;
+  discountAmount?: number | null;
+  deliveryPrice?: number | null;
   total: number;
   status: 'new' | 'processing' | 'shipped' | 'completed' | 'cancelled';
   customer?: (number | null) | Customer;
@@ -507,6 +511,7 @@ export interface Order {
   username: string;
   email: string;
   phone?: string | null;
+  deliveryRegion?: ('belarus' | 'moscow' | 'russia' | 'cis' | 'world') | null;
   deliveryMethod?: string | null;
   deliveryAddress?: string | null;
   paymentMethod?: string | null;
@@ -548,6 +553,55 @@ export interface CustomerIdentity {
   emailVerified?: boolean | null;
   linkedAt?: string | null;
   lastLoginAt?: string | null;
+  createdBy?:
+    | ({
+        relationTo: 'admins';
+        value: number | Admin;
+      } | null)
+    | ({
+        relationTo: 'customers';
+        value: number | Customer;
+      } | null);
+  updatedBy?:
+    | ({
+        relationTo: 'admins';
+        value: number | Admin;
+      } | null)
+    | ({
+        relationTo: 'customers';
+        value: number | Customer;
+      } | null);
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "promo-codes".
+ */
+export interface PromoCode {
+  id: number;
+  /**
+   * Например: DIMON10
+   */
+  code: string;
+  discountPercent: number;
+  isActive?: boolean | null;
+  /**
+   * Оставь пустым, если количество использований не ограничено.
+   */
+  maxUses?: number | null;
+  /**
+   * Увеличивается сервером при оформлении заказа.
+   */
+  usedCount: number;
+  /**
+   * Оставь пустым, если промокод действует сразу.
+   */
+  startsAt?: string | null;
+  /**
+   * Оставь пустым, если срок действия не ограничен.
+   */
+  expiresAt?: string | null;
   createdBy?:
     | ({
         relationTo: 'admins';
@@ -628,6 +682,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'customer-identities';
         value: number | CustomerIdentity;
+      } | null)
+    | ({
+        relationTo: 'promo-codes';
+        value: number | PromoCode;
       } | null);
   globalSlug?: string | null;
   user:
@@ -851,6 +909,10 @@ export interface OrdersSelect<T extends boolean = true> {
         unitPrice?: T;
         id?: T;
       };
+  promoCode?: T;
+  discountPercent?: T;
+  discountAmount?: T;
+  deliveryPrice?: T;
   total?: T;
   status?: T;
   customer?: T;
@@ -858,6 +920,7 @@ export interface OrdersSelect<T extends boolean = true> {
   username?: T;
   email?: T;
   phone?: T;
+  deliveryRegion?: T;
   deliveryMethod?: T;
   deliveryAddress?: T;
   paymentMethod?: T;
@@ -941,6 +1004,23 @@ export interface CustomerIdentitiesSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "promo-codes_select".
+ */
+export interface PromoCodesSelect<T extends boolean = true> {
+  code?: T;
+  discountPercent?: T;
+  isActive?: T;
+  maxUses?: T;
+  usedCount?: T;
+  startsAt?: T;
+  expiresAt?: T;
+  createdBy?: T;
+  updatedBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv_select".
  */
 export interface PayloadKvSelect<T extends boolean = true> {
@@ -997,13 +1077,15 @@ export interface PayloadLlmInstructionsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "social-links".
+ * via the `definition` "delivery-prices".
  */
-export interface SocialLink {
+export interface DeliveryPrice {
   id: number;
-  telegram: string;
-  tiktok: string;
-  instagram: string;
+  belarus: number;
+  moscow: number;
+  russia: number;
+  cis: number;
+  world: number;
   createdBy?:
     | ({
         relationTo: 'admins';
@@ -1027,58 +1109,14 @@ export interface SocialLink {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "legal-settings".
+ * via the `definition` "delivery-prices_select".
  */
-export interface LegalSetting {
-  id: number;
-  brandName: string;
-  entrepreneurName: string;
-  inn: string;
-  ogrnip: string;
-  createdBy?:
-    | ({
-        relationTo: 'admins';
-        value: number | Admin;
-      } | null)
-    | ({
-        relationTo: 'customers';
-        value: number | Customer;
-      } | null);
-  updatedBy?:
-    | ({
-        relationTo: 'admins';
-        value: number | Admin;
-      } | null)
-    | ({
-        relationTo: 'customers';
-        value: number | Customer;
-      } | null);
-  updatedAt?: string | null;
-  createdAt?: string | null;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "social-links_select".
- */
-export interface SocialLinksSelect<T extends boolean = true> {
-  telegram?: T;
-  tiktok?: T;
-  instagram?: T;
-  createdBy?: T;
-  updatedBy?: T;
-  updatedAt?: T;
-  createdAt?: T;
-  globalType?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "legal-settings_select".
- */
-export interface LegalSettingsSelect<T extends boolean = true> {
-  brandName?: T;
-  entrepreneurName?: T;
-  inn?: T;
-  ogrnip?: T;
+export interface DeliveryPricesSelect<T extends boolean = true> {
+  belarus?: T;
+  moscow?: T;
+  russia?: T;
+  cis?: T;
+  world?: T;
   createdBy?: T;
   updatedBy?: T;
   updatedAt?: T;
@@ -1121,7 +1159,8 @@ export interface CollectionQueryWidget {
       | 'products'
       | 'orders'
       | 'customers'
-      | 'customer-identities';
+      | 'customer-identities'
+      | 'promo-codes';
     where?:
       | {
           [k: string]: unknown;
@@ -1154,6 +1193,7 @@ export interface ActivityWidget {
           | 'orders'
           | 'customers'
           | 'customer-identities'
+          | 'promo-codes'
         )[]
       | null;
   };

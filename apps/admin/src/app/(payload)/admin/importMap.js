@@ -7,6 +7,7 @@ import { default as default_0d78b8b8354cf2c10fa5f2a380698a1d } from '../../../sh
 import { default as default_0a7ea7859d63feef82162bb730348b8d } from '../../../shared/ui/editableSelectCell'
 import { default as default_c9dcf45d7a31fd6f36189798fd0790cf } from '../../../modules/orders/ui/orderItemsCell'
 import { default as default_32f3c3e4765f46f08d24f06f8c7d3571 } from '../../../modules/orders/ui/orderView'
+import { default as default_8e0b8fa77f2c83a1eb23ef54657966ab } from '../../../modules/promocodes/ui/promoDateCell'
 import { LLMInstructionsDescription as LLMInstructionsDescription_3817bf644402e67bfe6577f60ef982de } from '@payloadcms/ui'
 import { RscEntryLexicalCell as RscEntryLexicalCell_44fe37237e0ebf4470c9990d8cb7b07e } from '@payloadcms/richtext-lexical/rsc'
 import { RscEntryLexicalField as RscEntryLexicalField_44fe37237e0ebf4470c9990d8cb7b07e } from '@payloadcms/richtext-lexical/rsc'
@@ -45,6 +46,7 @@ export const importMap = {
   "/shared/ui/editableSelectCell#default": default_0a7ea7859d63feef82162bb730348b8d,
   "/modules/orders/ui/orderItemsCell#default": default_c9dcf45d7a31fd6f36189798fd0790cf,
   "/modules/orders/ui/orderView#default": default_32f3c3e4765f46f08d24f06f8c7d3571,
+  "/modules/promocodes/ui/promoDateCell#default": default_8e0b8fa77f2c83a1eb23ef54657966ab,
   "@payloadcms/ui#LLMInstructionsDescription": LLMInstructionsDescription_3817bf644402e67bfe6577f60ef982de,
   "@payloadcms/richtext-lexical/rsc#RscEntryLexicalCell": RscEntryLexicalCell_44fe37237e0ebf4470c9990d8cb7b07e,
   "@payloadcms/richtext-lexical/rsc#RscEntryLexicalField": RscEntryLexicalField_44fe37237e0ebf4470c9990d8cb7b07e,

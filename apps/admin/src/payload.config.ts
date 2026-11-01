@@ -14,8 +14,10 @@ import { Categories } from './modules/categories'
 import { Products } from './modules/products'
 import { Orders } from './modules/orders'
 import { Customers, CustomerIdentities } from './modules/customers'
+import { PromoCodes } from './modules/promocodes'
 
-import { OwnerInfo, SocialLinks } from './modules/settings'
+// import { OwnerInfo, SocialLinks } from './modules/settings'
+import { DeliveryPrices } from './modules/settings'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -27,7 +29,8 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
   },
-  globals: [SocialLinks, OwnerInfo],
+  globals: [DeliveryPrices],
+  // globals: [SocialLinks, OwnerInfo],
   collections: [
     Admins,
     Media,
@@ -38,6 +41,7 @@ export default buildConfig({
     Orders,
     Customers,
     CustomerIdentities,
+    PromoCodes,
   ],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
