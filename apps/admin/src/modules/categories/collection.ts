@@ -31,7 +31,7 @@ export const Categories: CollectionConfig = {
       type: 'text',
       label: 'Slug',
       unique: true,
-      required: true,
+      // required: true,
     },
     {
       name: 'products',

@@ -52,7 +52,24 @@ export const Customers: CollectionConfig = {
       label: 'Телефон',
       access: { update: onlyCustomer },
     },
-
+    {
+      name: 'username',
+      type: 'text',
+      label: 'Username',
+      maxLength: 33,
+      access: {
+        update: onlyCustomer,
+      },
+    },
+    {
+      name: 'email',
+      type: 'email',
+      label: 'Email',
+      required: true,
+      access: {
+        update: onlyAdmin,
+      },
+    },
     {
       name: 'addresses',
       type: 'array',

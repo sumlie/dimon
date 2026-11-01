@@ -230,6 +230,7 @@ export interface Customer {
   id: number;
   name: string;
   phone?: string | null;
+  username?: string | null;
   addresses?:
     | {
         /**
@@ -417,7 +418,7 @@ export interface Tag {
 export interface Category {
   id: number;
   title: string;
-  slug: string;
+  slug?: string | null;
   products?: {
     docs?: (number | Product)[];
     hasNextPage?: boolean;
@@ -874,6 +875,7 @@ export interface OrdersSelect<T extends boolean = true> {
 export interface CustomersSelect<T extends boolean = true> {
   name?: T;
   phone?: T;
+  username?: T;
   addresses?:
     | T
     | {

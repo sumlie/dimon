@@ -1,6 +1,6 @@
 import {
-  fetchCategories,
   fetchProducts,
+  getCategoriesFromProducts,
 } from "@/entities/product/model/products-api";
 import { Product as ProductCard } from "@/entities/product/ui/product";
 import { CategoryFilter } from "@/features/category-filter";
@@ -12,13 +12,15 @@ export default async function CatalogPage({
 }: {
   searchParams: Promise<{ category?: string }>;
 }) {
-  const searchParamsResult = await searchParams;
-  const category = searchParamsResult?.category;
+  const { category } = await searchParams;
 
-  const [products, categories] = await Promise.all([
-    fetchProducts(category),
-    fetchCategories(),
-  ]);
+  const allProducts = await fetchProducts();
+
+  const categories = getCategoriesFromProducts(allProducts);
+
+  const products = category
+    ? allProducts.filter((product) => product.category?.slug === category)
+    : allProducts;
 
   return (
     <>

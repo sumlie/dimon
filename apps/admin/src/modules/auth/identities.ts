@@ -2,6 +2,7 @@ import type { Payload, PayloadRequest } from 'payload'
 
 import type { SocialProviderId } from './config'
 import { AuthError } from './errors'
+import { Customer } from '@/payloadTypes'
 
 export type CustomerIdentity = {
   id: number
@@ -122,17 +123,20 @@ export async function getCustomer(
   payload: Payload,
   customerId: number,
   req?: PayloadRequest,
-): Promise<any | null> {
-  try {
-    return await payload.findByID({
-      collection: 'customers',
-      id: customerId,
-      depth: 0,
-      overrideAccess: true,
-      req,
-      showHiddenFields: true,
-    })
-  } catch {
-    return null
-  }
+): Promise<Customer | null> {
+  const result = await payload.find({
+    collection: 'customers',
+    where: {
+      id: {
+        equals: customerId,
+      },
+    },
+    limit: 1,
+    depth: 0,
+    overrideAccess: true,
+    showHiddenFields: true,
+    req,
+  })
+
+  return result.docs[0] ?? null
 }

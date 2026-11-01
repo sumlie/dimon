@@ -2,46 +2,37 @@ import type { Category, Product } from "./types";
 
 export type { Category, Product };
 
-// URL админки Payload (откуда берём товары)
 const PAYLOAD_URL = process.env.PAYLOAD_URL ?? "http://localhost:3001";
 
-// Тип категории, как она приходит из Payload
 type PayloadCategory = {
   id: string | number;
   title: string;
   slug: string;
 };
 
-// Тип товара, как он приходит из Payload (только нужные поля)
 type PayloadProduct = {
   id: string | number;
   title: string;
+  slug: string;
   priceRub: number;
   priceByn: number;
   status: string;
   photos?: Array<{ url?: string | null } | string | number> | null;
-  description?: string;
-  oldPrice?: string;
-  oldPriceByn?: string;
-  discount?: string;
+  description?: string | null;
+  oldPrice?: string | null;
+  oldPriceByn?: string | null;
+  discount?: string | null;
   category?: PayloadCategory | string | number | null;
 };
 
-// URL картинки
 const mediaUrl = (url?: string | null) =>
   url ? (url.startsWith("http") ? url : `${PAYLOAD_URL}${url}`) : "";
 
-// Собирает все картинки товара из массива photos
 const extractImages = (photos: PayloadProduct["photos"]): string[] =>
   (photos ?? [])
     .map((ph) => (typeof ph === "object" && ph ? mediaUrl(ph.url) : ""))
     .filter(Boolean);
 
-/**
- * Загружает список опубликованных товаров из Payload.
- * Если передан slug категории, возвращает товары только этой категории.
- * Возвращает массив в формате, подходящем для карточки товара (entities/product).
- */
 export async function fetchProducts(category?: string): Promise<Product[]> {
   const params = new URLSearchParams({
     "where[status][equals]": "published",
@@ -63,7 +54,6 @@ export async function fetchProducts(category?: string): Promise<Product[]> {
     const categoryData = (await categoryRes.json()) as { docs?: Array<{ id: string | number }> };
     const categoryDoc = categoryData.docs?.[0];
 
-    // Если категории нет — товаров в ней нет
     if (!categoryDoc) {
       return [];
     }
@@ -83,14 +73,20 @@ export async function fetchProducts(category?: string): Promise<Product[]> {
 
   return docs.map((p) => {
     const images = extractImages(p.photos);
+
     return {
       id: String(p.id),
+      slug: p.slug,
       name: p.title,
       price: String(p.priceRub),
       priceByn: String(p.priceByn),
       image: images[0] ?? "",
       images,
       published: p.status === "published",
+      description: p.description ?? undefined,
+      oldPrice: p.oldPrice ?? undefined,
+      oldPriceByn: p.oldPriceByn ?? undefined,
+      discount: p.discount ?? undefined,
       category:
         p.category && typeof p.category === "object"
           ? {
@@ -103,10 +99,6 @@ export async function fetchProducts(category?: string): Promise<Product[]> {
   });
 }
 
-/**
- * Загружает ОДИН товар по его ID из Payload.
- * Возвращает товар в формате entities/product или null, если не найден.
- */
 export async function fetchProductById(id: string): Promise<Product | null> {
   const url = `${PAYLOAD_URL}/api/products/${id}?depth=1`;
   const res = await fetch(url, { cache: "no-store" });
@@ -157,57 +149,32 @@ export async function fetchProductById(id: string): Promise<Product | null> {
   } as Product;
 }
 
-/**
- * Загружает список всех категорий из Payload.
- * Возвращает массив в формате, подходящем для фильтра категорий (entities/product).
- */
-export async function fetchCategories(): Promise<Category[]> {
-  const res = await fetch(`${PAYLOAD_URL}/api/categories?limit=100`, {
-    cache: "no-store",
-  });
-
-  if (!res.ok) {
-    throw new Error(`Payload error: ${res.status} ${res.statusText}`);
-  }
-
-  const { docs } = (await res.json()) as { docs: PayloadCategory[] };
-
-  return docs.map((c) => ({
-    id: String(c.id),
-    title: c.title,
-    slug: c.slug,
-  }));
-}
-
-
-export async function fetchRelatedProducts(
+export function getRelatedProducts(
+  products: Product[],
   categorySlug: string | undefined,
   currentProductId: string,
   limit = 4,
-): Promise<Product[]> {
-  const [categoryProducts, allProducts] = await Promise.all([
-    categorySlug ? fetchProducts(categorySlug) : Promise.resolve([]),
-    fetchProducts(),
-  ]);
+): Product[] {
+  const otherProducts = products.filter(
+    (product) => product.id !== currentProductId,
+  );
 
-  const relatedProducts = categoryProducts
-    .filter((product) => product.id !== currentProductId)
-    .slice(0, limit);
+  const similarProducts = categorySlug
+    ? otherProducts.filter(
+        (product) => product.category?.slug === categorySlug,
+      )
+    : [];
 
-  if (relatedProducts.length >= limit) {
-    return relatedProducts;
-  }
+  const remainingProducts = categorySlug
+    ? otherProducts.filter(
+        (product) => product.category?.slug !== categorySlug,
+      )
+    : otherProducts;
 
-  const selectedIds = new Set([
-    currentProductId,
-    ...relatedProducts.map((product) => product.id),
-  ]);
-
-  const additionalProducts = allProducts
-    .filter((product) => !selectedIds.has(product.id))
-    .slice(0, limit - relatedProducts.length);
-
-  return [...relatedProducts, ...additionalProducts];
+  return [...similarProducts, ...remainingProducts].slice(
+    0,
+    Math.max(0, limit),
+  );
 }
 
 export function getCategoriesFromProducts(products: Product[]) {

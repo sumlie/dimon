@@ -57,6 +57,7 @@ export function sanitizeCustomer(customer: any) {
     id: customer.id,
     email: customer.email,
     name: customer.name,
+    username: customer.username || null,
     phone: customer.phone || null,
     addresses: customer.addresses || [],
     defaultPaymentMethod: customer.defaultPaymentMethod || null,

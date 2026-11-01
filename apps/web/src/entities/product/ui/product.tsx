@@ -21,7 +21,7 @@ export function Product({ product }: ProductProps) {
       : [];
 
   const multiple = images.length > 1;
-  const productHref = `/catalog/${product.id}`;
+  const productHref = `/catalog/${encodeURIComponent(product.slug)}`;
 
   const handleMouseMove = (event: MouseEvent<HTMLDivElement>) => {
     if (!multiple) return;

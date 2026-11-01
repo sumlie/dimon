@@ -15,6 +15,7 @@ export type Product = {
     name: string;
     slug: string;
   } | null;
+  slug: string
 };
 
 export type Category = {

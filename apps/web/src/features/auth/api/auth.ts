@@ -95,3 +95,24 @@ export async function completeOnboarding(data: {
   });
   return readJson<{ ok: true; redirectTo: string }>(response);
 }
+
+export type UpdateProfileData = {
+  name: string;
+  phone: string;
+  username: string;
+  deliveryMethod: string;
+  deliveryAddress: string;
+};
+
+export async function updateProfile(data: UpdateProfileData): Promise<void> {
+  const response = await fetch("/api/auth/profile", {
+    method: "PATCH",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+
+  await readJson<{ ok: true }>(response);
+}

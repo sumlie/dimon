@@ -113,13 +113,13 @@ export function AuthDialog({
   };
 
   return (
-    <Popup open={open} onClose={onClose}>
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="auth-dialog-title"
-        className="relative w-full max-w-md border-2 border-black bg-white p-6 sm:p-8"
-      >
+    <Popup
+      open={open}
+      onClose={onClose}
+      title={mode === "link" ? "Привязать аккаунт" : "Вход в аккаунт"}
+      contentClassName="max-w-md"
+    >
+      <div className="relative w-full border-2 border-black bg-white p-6 sm:p-8">
         <button
           type="button"
           onClick={onClose}

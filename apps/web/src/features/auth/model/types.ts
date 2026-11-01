@@ -7,12 +7,23 @@ export type AuthIdentity = {
   lastLoginAt: string | null;
 };
 
+export type CustomerAddress = {
+  id?: string | null;
+  label?: string | null;
+  recipientName?: string | null;
+  recipientPhone?: string | null;
+  deliveryMethod?: string | null;
+  address: string;
+  isDefault?: boolean | null;
+};
+
 export type AuthCustomer = {
   id: number;
   email: string;
   name: string;
   phone: string | null;
-  addresses: unknown[];
+  username: string | null;
+  addresses: CustomerAddress[];
   defaultPaymentMethod: string | null;
   emailVerifiedAt: string | null;
   registrationCompletedAt: string | null;

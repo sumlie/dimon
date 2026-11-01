@@ -108,10 +108,17 @@ export async function handleOAuthCallback(
       result.session.cookie,
     ])
   } catch (error) {
-    const code = isAuthError(error) ? error.code : 'internal_error'
-    return redirectWithError(fallbackRedirect, code, [clearedStateCookie()])
+      console.error('OAuth callback failed:', {
+        provider,
+        name: error instanceof Error ? error.name : 'UnknownError',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      })
+
+      const code = isAuthError(error) ? error.code : 'internal_error'
+
+      return redirectWithError(fallbackRedirect, code, [clearedStateCookie()])
+    }
   }
-}
 
 function addQuery(path: string, key: string, value: string): string {
   const safe = safeRedirect(path)

@@ -138,7 +138,7 @@ export function HeroSection() {
               нам и вам, и распространяем ДИМОНа дальше.
             </p>
 
-            <Button href="#!" pd="lg">
+            <Button href="/catalog" pd="lg">
               каталог
               <ArrowRight
                 strokeWidth={1.5}
