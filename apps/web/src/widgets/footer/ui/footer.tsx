@@ -7,6 +7,7 @@ import {
   FOOTER_PAYMENT_METHODS,
   FOOTER_SOCIALS,
   SOCIAL_ICONS,
+  FooterColumn
 } from "../config/consts";
 
 type FooterProps = {
@@ -14,7 +15,7 @@ type FooterProps = {
 };
 
 export function Footer({ categories }: FooterProps) {
-  const columns = [
+  const columns: FooterColumn[] = [
     {
       title: "каталог",
       links: categories.map((category) => ({
@@ -40,6 +41,8 @@ export function Footer({ categories }: FooterProps) {
                   <li key={link.label}>
                     <Button
                       href={link.href}
+                      target={link.external ? "_blank" : undefined}
+                      rel={link.external ? "noopener noreferrer" : undefined}
                       variant="textInvert"
                       pd="none"
                       className="break-words"
@@ -76,11 +79,11 @@ export function Footer({ categories }: FooterProps) {
                 pd="none"
                 className="w-fit"
               >
-                dimonclo.support@gmail.com
+                support.dimonclo@gmail.com
               </Button>
 
               <p className="font-sans text-base text-white/60 sm:text-lg">
-                пишите в любое время — не кусаемся
+                связь — 24/7
               </p>
             </div>
           </div>
@@ -143,8 +146,8 @@ export function Footer({ categories }: FooterProps) {
           </div>
         </div>
 
-        <div className="mt-8 flex flex-col gap-2 border-t border-white/15 pt-6 font-sans text-xs lowercase text-white/40 sm:mt-12 sm:flex-row sm:items-center sm:justify-between sm:pt-8">
-          <p>© 2026 димон. ип есьман м.в., егр 0962098, унп 291971050</p>
+        <div className="mt-8 flex flex-col gap-2 border-t border-white/15 pt-6 font-sans text-xs text-white/40 sm:mt-12 sm:flex-row sm:items-center sm:justify-between sm:pt-8">
+          <p>© 2026 ДИМОН. ИП Есьман М.В., ЕГР 0962098, УНП 291971050</p>
 
           <p>
             разработано при поддержке{" "}

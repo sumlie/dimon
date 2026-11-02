@@ -3,6 +3,8 @@ export type Product = {
   name: string;
   price: string;
   priceByn: string;
+  stock: number;
+
   oldPrice?: string;
   oldPriceByn?: string;
   discount?: string;
@@ -15,7 +17,7 @@ export type Product = {
     name: string;
     slug: string;
   } | null;
-  slug: string
+  slug: string;
 };
 
 export type Category = {

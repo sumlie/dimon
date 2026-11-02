@@ -71,6 +71,23 @@ export const Customers: CollectionConfig = {
       },
     },
     {
+      name: 'deliveryRegion',
+      type: 'select',
+      label: 'Регион доставки',
+      options: [
+        { label: 'Беларусь', value: 'belarus' },
+        { label: 'Москва и Московская область', value: 'moscow' },
+        { label: 'Другие регионы России', value: 'russia' },
+        { label: 'Страны СНГ', value: 'cis' },
+        { label: 'Остальной мир', value: 'world' },
+      ],
+    },
+    {
+      name: 'cdekPointCode',
+      type: 'text',
+      label: 'Код пункта выдачи СДЭК',
+    },
+    {
       name: 'addresses',
       type: 'array',
       label: 'Адреса доставки',

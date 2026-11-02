@@ -23,10 +23,30 @@ type PayloadProduct = {
   oldPriceByn?: string | null;
   discount?: string | null;
   category?: PayloadCategory | string | number | null;
+  stock?: number | null;
 };
 
-const mediaUrl = (url?: string | null) =>
-  url ? (url.startsWith("http") ? url : `${PAYLOAD_URL}${url}`) : "";
+const mediaUrl = (url?: string | null) => {
+  if (!url) return "";
+
+  if (url.startsWith("/api/media/")) return url;
+
+  try {
+    const parsed = new URL(url);
+    const payloadOrigin = new URL(PAYLOAD_URL).origin;
+
+    if (
+      parsed.origin === payloadOrigin &&
+      parsed.pathname.startsWith("/api/media/")
+    ) {
+      return `${parsed.pathname}${parsed.search}`;
+    }
+
+    return url;
+  } catch {
+    return url;
+  }
+};
 
 const extractImages = (photos: PayloadProduct["photos"]): string[] =>
   (photos ?? [])
@@ -62,7 +82,7 @@ export async function fetchProducts(category?: string): Promise<Product[]> {
   }
 
   const res = await fetch(`${PAYLOAD_URL}/api/products?${params}`, {
-    cache: "no-store",
+    next: { revalidate: 60 },
   });
 
   if (!res.ok) {
@@ -78,6 +98,7 @@ export async function fetchProducts(category?: string): Promise<Product[]> {
       id: String(p.id),
       slug: p.slug,
       name: p.title,
+      stock: typeof p.stock === "number" ? p.stock : 0,
       price: String(p.priceRub),
       priceByn: String(p.priceByn),
       image: images[0] ?? "",
@@ -113,6 +134,7 @@ export async function fetchProductById(id: string): Promise<Product | null> {
   const p = doc as {
     id: string | number;
     title: string;
+    stock?: number | null;
     priceRub: number;
     priceByn: number;
     status: string;
@@ -196,4 +218,29 @@ export function getCategoriesFromProducts(products: Product[]) {
   }
 
   return Array.from(categories.values());
+}
+
+export async function fetchCategories(): Promise<Category[]> {
+  const response = await fetch(
+    `${PAYLOAD_URL}/api/categories`,
+    {
+      next: { revalidate: 60 },
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      `Не удалось загрузить категории футера: ${response.status}`,
+    );
+  }
+
+  const data = (await response.json()) as {
+    docs: PayloadCategory[];
+  };
+
+  return data.docs.map((category) => ({
+    id: String(category.id),
+    title: category.title,
+    slug: category.slug,
+  }));
 }

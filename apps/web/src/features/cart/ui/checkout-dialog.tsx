@@ -1,10 +1,10 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { ArrowRight, X } from "lucide-react";
 
+import { useCurrentCustomer } from "@/features/auth";
 import { Popup } from "@/shared/ui/popup";
 import { useCartStore } from "../";
 
@@ -15,7 +15,10 @@ type DeliveryRegion =
   | "cis"
   | "world";
 
-type DeliveryPrices = Record<DeliveryRegion, number>;
+type DeliveryPrices = Record<DeliveryRegion, number> & {
+  pickupEnabled: boolean;
+  pickupAddress: string | null;
+};
 
 type Fulfillment = "delivery" | "pickup";
 
@@ -41,7 +44,6 @@ type AppliedPromo = {
   discountPercent: number;
 };
 
-const PICKUP_ADDRESS = "Минск, проспект Машерова, 60";
 
 const DELIVERY_REGIONS: {
   value: DeliveryRegion;
@@ -70,6 +72,9 @@ function isDeliveryPrices(value: unknown): value is DeliveryPrices {
 
   const prices = value as Record<string, unknown>;
 
+  if (typeof prices.pickupEnabled !== "boolean") return false;
+  if (prices.pickupAddress !== null && typeof prices.pickupAddress !== "string") return false;
+
   return DELIVERY_REGIONS.every(({ value: region }) => {
     const price = prices[region];
 
@@ -81,14 +86,14 @@ function isDeliveryPrices(value: unknown): value is DeliveryPrices {
   });
 }
 
-const CdekMap = dynamic(() => import("./cdek-widget"), {
-  ssr: false,
-  loading: () => (
-    <div className="flex h-[350px] items-center justify-center border border-black/20 font-sans text-sm lowercase text-black/50">
-      загружаем карту...
-    </div>
-  ),
-});
+// const CdekMap = dynamic(() => import("./cdek-widget"), {
+//   ssr: false,
+//   loading: () => (
+//     <div className="flex h-[350px] items-center justify-center border border-black/20 font-sans text-sm lowercase text-black/50">
+//       загружаем карту...
+//     </div>
+//   ),
+// });
 
 export function CheckoutDialog({
   disabled = false,
@@ -96,6 +101,8 @@ export function CheckoutDialog({
   totalByn,
   onSuccess,
 }: CheckoutDialogProps) {
+  const { customer, identities, loading: customerLoading, error: customerError } = useCurrentCustomer();
+
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -111,6 +118,7 @@ export function CheckoutDialog({
   >("");
 
   const [deliveryMethod, setDeliveryMethod] = useState("");
+  const [deliveryAddress, setDeliveryAddress] = useState("");
   const [cdekPoint, setCdekPoint] = useState<CdekPoint | null>(null);
 
   const [deliveryPrices, setDeliveryPrices] =
@@ -130,7 +138,123 @@ export function CheckoutDialog({
   const [promoLoading, setPromoLoading] = useState(false);
   const [promoError, setPromoError] = useState<string | null>(null);
 
+  const [firstOrderEligible, setFirstOrderEligible] =
+    useState(false);
+
+  const [discountLoading, setDiscountLoading] = useState(false);
+
+  const [discountError, setDiscountError] =
+    useState<string | null>(null);
+
+  useEffect(() => {
+    if (!open || customerLoading || customerError) return;
+
+    if (!customer) {
+      setFirstOrderEligible(false);
+      setDiscountLoading(false);
+      setDiscountError(null);
+      return;
+    }
+
+    const controller = new AbortController();
+
+    async function loadFirstOrderDiscount() {
+      setDiscountLoading(true);
+      setDiscountError(null);
+      setFirstOrderEligible(false);
+
+      try {
+        const response = await fetch(
+          "/api/auth/first-order-discount",
+          {
+            credentials: "include",
+            cache: "no-store",
+            signal: controller.signal,
+          },
+        );
+
+        if (!response.ok) {
+          throw new Error("Не удалось проверить скидку.");
+        }
+
+        const data: unknown = await response.json();
+
+        if (
+          !data ||
+          typeof data !== "object" ||
+          !("eligible" in data) ||
+          typeof data.eligible !== "boolean"
+        ) {
+          throw new Error("Некорректный ответ сервера.");
+        }
+
+        if (!controller.signal.aborted) {
+          setFirstOrderEligible(data.eligible);
+        }
+      } catch {
+        if (!controller.signal.aborted) {
+          setDiscountError(
+            "Не удалось проверить скидку. Закрой и открой оформление заказа ещё раз.",
+          );
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setDiscountLoading(false);
+        }
+      }
+    }
+
+    void loadFirstOrderDiscount();
+
+    return () => controller.abort();
+  }, [open, customer?.id, customerLoading, customerError]);
+
   const promoRequestRef = useRef(0);
+
+  const profileInitializedRef = useRef(false);
+
+  useEffect(() => {
+    if (!open) {
+      profileInitializedRef.current = false;
+      return;
+    }
+
+    // Ждём загрузки профиля и не перезаписываем ввод пользователя,
+    // если данные аккаунта обновятся во время заполнения формы.
+    if (
+      customerLoading ||
+      customerError ||
+      profileInitializedRef.current
+    ) {
+      return;
+    }
+
+    profileInitializedRef.current = true;
+
+    const address = customer?.addresses.find(
+      (item) => item.isDefault,
+    );
+
+    const savedRegion = customer?.deliveryRegion;
+
+    const validRegion = DELIVERY_REGIONS.some(
+      (region) => region.value === savedRegion,
+    );
+
+    const savedMethod = address?.deliveryMethod;
+
+    const validMethod =
+      savedMethod === "cdek" ||
+      savedMethod === "belmail" ||
+      savedMethod === "euromail";
+
+    setDeliveryRegion(
+      validRegion ? savedRegion as DeliveryRegion : "",
+    );
+
+    setDeliveryMethod(validMethod ? savedMethod : "");
+    setDeliveryAddress(address?.address ?? "");
+  }, [open, customer, customerLoading, customerError]);
 
   useEffect(() => {
     if (!open) return;
@@ -141,6 +265,7 @@ export function CheckoutDialog({
       setDeliveryPricesLoading(true);
       setDeliveryPricesError(null);
       setDeliveryPrices(null);
+      setFulfillment("delivery");
 
       try {
         const response = await fetch("/api/auth/delivery-prices", {
@@ -195,7 +320,20 @@ export function CheckoutDialog({
         ? deliveryPrices[deliveryRegion]
         : null;
 
-  const discountPercent = appliedPromo?.discountPercent ?? 0;
+  const firstOrderPercent = firstOrderEligible ? 10 : 0;
+  const promoPercent = appliedPromo?.discountPercent ?? 0;
+
+  const discountPercent = Math.max(
+    firstOrderPercent,
+    promoPercent,
+  );
+
+  const discountType =
+    firstOrderPercent > 0 && firstOrderPercent >= promoPercent
+      ? "first_order"
+      : promoPercent > 0
+        ? "promo_code"
+        : "none";
 
   const discountRub =
     Math.round((totalRub * 100 * discountPercent) / 100) / 100;
@@ -215,9 +353,6 @@ export function CheckoutDialog({
 
   const changeFulfillment = (next: Fulfillment) => {
     setFulfillment(next);
-    setDeliveryRegion("");
-    setDeliveryMethod("");
-    setCdekPoint(null);
     setError(null);
   };
 
@@ -297,6 +432,27 @@ export function CheckoutDialog({
     }
   };
 
+  const hasEmailProvider = identities.some(
+    (identity) =>
+      identity.provider === "google" ||
+      identity.provider === "yandex",
+  );
+
+  const hasTelegramProvider = identities.some(
+    (identity) => identity.provider === "telegram",
+  );
+
+  const lockedEmail = Boolean(customer && hasEmailProvider);
+
+  const lockedTelegram = Boolean(
+    customer &&
+      hasTelegramProvider &&
+      customer.username?.trim(),
+  );
+
+  const defaultAddress =
+    customer?.addresses.find((address) => address.isDefault) ?? null;
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -306,6 +462,11 @@ export function CheckoutDialog({
 
     if (items.length === 0) {
       setError("Корзина пуста.");
+      return;
+    }
+
+    if (fulfillment === "pickup" && (!deliveryPrices?.pickupEnabled || !deliveryPrices.pickupAddress?.trim())) {
+      setError("Самовывоз сейчас недоступен. Обнови настройки.");
       return;
     }
 
@@ -319,11 +480,13 @@ export function CheckoutDialog({
         setError("Выбери способ доставки.");
         return;
       }
+    }
 
-      if (deliveryMethod === "cdek" && cdekCountry && !cdekPoint) {
-        setError("Выбери пункт выдачи СДЭК на карте.");
-        return;
-      }
+    if (discountLoading || discountError) {
+      setError(
+        discountError ?? "Дождись проверки скидки на первый заказ.",
+      );
+      return;
     }
 
     if (promoLoading) {
@@ -376,17 +539,10 @@ export function CheckoutDialog({
 
       deliveryAddress:
         fulfillment === "pickup"
-          ? PICKUP_ADDRESS
-          : deliveryMethod === "cdek" && cdekCountry
-            ? cdekPoint?.address ?? ""
-            : String(formData.get("deliveryAddress") ?? "").trim(),
+          ? deliveryPrices?.pickupAddress?.trim() ?? ""
+          : String(formData.get("deliveryAddress") ?? "").trim(),
 
-      cdekPointCode:
-        fulfillment === "delivery" &&
-        deliveryMethod === "cdek" &&
-        cdekCountry
-          ? cdekPoint?.code ?? ""
-          : "",
+      cdekPointCode: "",
 
       comment: String(formData.get("comment") ?? "").trim(),
 
@@ -425,6 +581,7 @@ export function CheckoutDialog({
       setFulfillment("delivery");
       setDeliveryRegion("");
       setDeliveryMethod("");
+      setDeliveryAddress("");
       setCdekPoint(null);
 
       setPromoCode("");
@@ -498,7 +655,23 @@ export function CheckoutDialog({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="px-5 py-6 sm:px-8">
+        {customerLoading ? (
+          <p className="px-5 py-8 font-sans text-sm lowercase text-black/50 sm:px-8">
+            загружаем данные...
+          </p>
+        ) : customerError ? (
+          <p
+            role="alert"
+            className="px-5 py-8 font-sans text-sm text-red-600 sm:px-8"
+          >
+            Не удалось загрузить данные аккаунта. Обнови страницу и попробуй снова.
+          </p>
+        ) : (
+          <form
+            key={customer?.id ?? "guest"}
+            onSubmit={handleSubmit}
+            className="px-5 py-6 sm:px-8"
+          >
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
             <label className={labelClassName}>
               <span>
@@ -509,6 +682,7 @@ export function CheckoutDialog({
                 name="customerName"
                 type="text"
                 autoComplete="name"
+                defaultValue={customer?.name ?? ""}
                 required
                 maxLength={100}
                 placeholder="как к тебе обращаться"
@@ -525,11 +699,18 @@ export function CheckoutDialog({
                 name="email"
                 type="email"
                 autoComplete="email"
+                defaultValue={customer?.email ?? ""}
+                readOnly={lockedEmail}
                 required
                 maxLength={254}
                 placeholder="example@mail.com"
                 className={inputClassName}
               />
+              {lockedEmail && (
+                <span className="text-xs normal-case text-black/40">
+                  email указан в аккаунте
+                </span>
+              )}
             </label>
 
             <label className={labelClassName}>
@@ -540,11 +721,18 @@ export function CheckoutDialog({
               <input
                 name="username"
                 type="text"
+                defaultValue={customer?.username ?? ""}
+                readOnly={lockedTelegram}
                 required
                 maxLength={100}
                 placeholder="@username"
                 className={inputClassName}
               />
+              {lockedTelegram && (
+                <span className="text-xs normal-case text-black/40">
+                  используется Telegram из профиля
+                </span>
+              )}
             </label>
 
             <label className={labelClassName}>
@@ -554,12 +742,32 @@ export function CheckoutDialog({
                 name="phone"
                 type="tel"
                 autoComplete="tel"
+                defaultValue={customer?.phone ?? ""}
                 maxLength={30}
                 placeholder="+375 ..."
                 className={inputClassName}
               />
             </label>
           </div>
+
+          {!customer && (
+            <div className="mt-6 border border-black/20 p-5 font-sans">
+              <p className="text-sm font-bold lowercase text-black">
+                скидка 10% на первый заказ
+              </p>
+
+              <p className="mt-2 text-sm lowercase leading-relaxed text-black/50">
+                войди или зарегистрируйся, чтобы получить скидку
+              </p>
+
+              <a
+                href="/account"
+                className="mt-4 inline-block text-sm font-bold lowercase text-black underline underline-offset-4 transition-colors hover:text-red-600"
+              >
+                войти или зарегистрироваться
+              </a>
+            </div>
+          )}
 
           <div className="mt-8 border-t border-black/20 pt-6">
             <div className="flex items-center justify-between gap-4">
@@ -594,6 +802,7 @@ export function CheckoutDialog({
                 доставка
               </button>
 
+              {deliveryPrices?.pickupEnabled && deliveryPrices.pickupAddress?.trim() && (
               <button
                 type="button"
                 aria-pressed={fulfillment === "pickup"}
@@ -606,6 +815,7 @@ export function CheckoutDialog({
               >
                 самовывоз
               </button>
+              )}
             </div>
 
             {fulfillment === "pickup" ? (
@@ -615,7 +825,7 @@ export function CheckoutDialog({
                 </p>
 
                 <p className="mt-2 text-base font-bold text-black">
-                  {PICKUP_ADDRESS}
+                  {deliveryPrices?.pickupAddress}
                 </p>
 
                 <p className="mt-2 text-sm lowercase leading-relaxed text-black/50">
@@ -705,69 +915,54 @@ export function CheckoutDialog({
 
                 {deliveryMethod === "cdek" && (
                   <div className="mt-5">
-                    {cdekCountry ? (
-                      <>
-                        <p className="font-sans text-sm lowercase text-black">
-                          пункт выдачи{" "}
-                          <span className="text-red-600">*</span>
-                        </p>
-
-                        <div className="mt-2">
-                          <CdekMap
-                            key={deliveryRegion}
-                            country={cdekCountry}
-                            onChoose={(point) => {
-                              setCdekPoint({
-                                code: point.code,
-                                address: point.address,
-                              });
-
-                              setError(null);
-                            }}
-                          />
-                        </div>
-
-                        <label className={`${labelClassName} mt-4`}>
-                          выбранный пункт
-
-                          <input
-                            type="text"
-                            value={cdekPoint?.address ?? ""}
-                            readOnly
-                            placeholder="выбери пункт на карте"
-                            className={`${inputClassName} bg-neutral-50`}
-                          />
-                        </label>
-                      </>
-                    ) : (
-                      <p className="font-sans text-sm leading-relaxed text-black/50">
-                        {deliveryRegion
-                          ? "Выбор пункта СДЭК для этого региона пока не подключён. Укажи адрес ниже."
-                          : "Сначала выбери регион доставки."}
-                      </p>
-                    )}
-                  </div>
-                )}
-
-                {deliveryMethod &&
-                  (deliveryMethod !== "cdek" ||
-                    (deliveryRegion && !cdekCountry)) && (
-                    <label className={`${labelClassName} mt-5`}>
+                    <label className={labelClassName}>
                       <span>
-                        адрес или пункт выдачи{" "}
+                        адрес пункта сдэк{" "}
                         <span className="text-red-600">*</span>
                       </span>
 
                       <textarea
                         name="deliveryAddress"
                         required
-                        maxLength={500}
+                        value={deliveryAddress}
+                        onChange={(event) => setDeliveryAddress(event.target.value)}
                         rows={3}
-                        placeholder="страна, город, адрес или адрес пункта выдачи"
+                        maxLength={500}
+                        placeholder="страна, город, улица и номер пункта"
                         className={`${inputClassName} resize-y`}
                       />
                     </label>
-                  )}
+
+                    <a
+                      href="https://www.cdek.ru/ru/offices/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-3 inline-block font-sans text-xs text-black/60 underline underline-offset-2 transition-colors hover:text-red-600"
+                    >
+                      найти пункт на карте сдэк
+                    </a>
+                  </div>
+                )}
+
+                {deliveryMethod && deliveryMethod !== "cdek" && (
+                  <label className={`${labelClassName} mt-5`}>
+                    <span>
+                      адрес или пункт выдачи{" "}
+                      <span className="text-red-600">*</span>
+                    </span>
+
+                    <textarea
+                      name="deliveryAddress"
+                      required
+                      value={deliveryAddress}
+                      onChange={(event) => setDeliveryAddress(event.target.value)}
+                      maxLength={500}
+                      rows={3}
+                      placeholder="страна, город, адрес или адрес пункта выдачи"
+                      className={`${inputClassName} resize-y`}
+                    />
+                  </label>
+                )}
               </>
             )}
           </div>
@@ -825,8 +1020,9 @@ export function CheckoutDialog({
                 role="status"
                 className="mt-2 font-sans text-sm text-black/60"
               >
-                промокод {appliedPromo.code} принят — скидка{" "}
-                {appliedPromo.discountPercent}%
+                {discountType === "first_order"
+                  ? `промокод ${appliedPromo.code} проверен, но скидка на первый заказ не меньше`
+                  : `промокод ${appliedPromo.code} принят — скидка ${appliedPromo.discountPercent}%`}
               </p>
             )}
 
@@ -849,10 +1045,13 @@ export function CheckoutDialog({
               </span>
             </div>
 
-            {appliedPromo && (
+            {discountPercent > 0 && (
               <div className="mt-3 flex items-center justify-between gap-4 text-sm">
                 <span className="text-black/50">
-                  скидка {appliedPromo.discountPercent}%
+                  {discountType === "first_order"
+                    ? "скидка на первый заказ"
+                    : "скидка по промокоду"}{" "}
+                  {discountPercent}%
                 </span>
 
                 <span className="text-right text-red-600">
@@ -899,6 +1098,15 @@ export function CheckoutDialog({
             </div>
           </div>
 
+          {discountError && (
+            <p
+              role="alert"
+              className="mt-5 border-l-2 border-red-600 pl-3 font-sans text-sm text-red-600"
+            >
+              {discountError}
+            </p>
+          )}
+
           {error && (
             <p
               role="alert"
@@ -912,7 +1120,10 @@ export function CheckoutDialog({
             type="submit"
             disabled={
               submitting ||
-              (fulfillment === "delivery" && deliveryPricesLoading)
+              discountLoading ||
+              Boolean(discountError) ||
+              deliveryPricesLoading ||
+              (fulfillment === "pickup" && (!deliveryPrices?.pickupEnabled || !deliveryPrices.pickupAddress?.trim()))
             }
             className="group mt-8 flex w-full cursor-pointer items-center justify-between gap-4 border border-black bg-black px-6 py-4 font-sans text-base font-extrabold lowercase text-white transition-colors hover:bg-white hover:text-black disabled:cursor-not-allowed disabled:opacity-50"
           >
@@ -925,6 +1136,7 @@ export function CheckoutDialog({
             />
           </button>
         </form>
+      )}
       </Popup>
     </>
   );

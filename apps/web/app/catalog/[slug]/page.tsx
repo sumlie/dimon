@@ -84,7 +84,7 @@ export default async function ProductPage({
                       <span className="line-through">{product.oldPrice} rub</span>
                     ) : null}
                   </div>
-                  <AddToCartButton productId={product.id} />
+                  <AddToCartButton productId={product.id} stock={product.stock} />
                   
 
                   {product.description ? (

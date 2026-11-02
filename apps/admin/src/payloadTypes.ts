@@ -90,6 +90,7 @@ export interface Config {
     customers: Customer;
     'customer-identities': CustomerIdentity;
     'promo-codes': PromoCode;
+    pages: Page;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -112,6 +113,7 @@ export interface Config {
     customers: CustomersSelect<false> | CustomersSelect<true>;
     'customer-identities': CustomerIdentitiesSelect<false> | CustomerIdentitiesSelect<true>;
     'promo-codes': PromoCodesSelect<false> | PromoCodesSelect<true>;
+    pages: PagesSelect<false> | PagesSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -231,6 +233,8 @@ export interface Customer {
   name: string;
   phone?: string | null;
   username?: string | null;
+  deliveryRegion?: ('belarus' | 'moscow' | 'russia' | 'cis' | 'world') | null;
+  cdekPointCode?: string | null;
   addresses?:
     | {
         /**
@@ -500,6 +504,7 @@ export interface Order {
     unitPrice: number;
     id?: string | null;
   }[];
+  discountType?: ('none' | 'first_order' | 'promo_code') | null;
   promoCode?: string | null;
   discountPercent?: number | null;
   discountAmount?: number | null;
@@ -625,6 +630,46 @@ export interface PromoCode {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pages".
+ */
+export interface Page {
+  id: number;
+  /**
+   * Заголовок, который увидят посетители сайта.
+   */
+  title: string;
+  /**
+   * Например: terms-of-use. Указывай без слэша в начале.
+   */
+  slug: string;
+  /**
+   * Текст страницы в формате Markdown. Главный заголовок берётся из поля «Название страницы».
+   */
+  content: string;
+  status: 'draft' | 'published';
+  createdBy?:
+    | ({
+        relationTo: 'admins';
+        value: number | Admin;
+      } | null)
+    | ({
+        relationTo: 'customers';
+        value: number | Customer;
+      } | null);
+  updatedBy?:
+    | ({
+        relationTo: 'admins';
+        value: number | Admin;
+      } | null)
+    | ({
+        relationTo: 'customers';
+        value: number | Customer;
+      } | null);
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -686,6 +731,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'promo-codes';
         value: number | PromoCode;
+      } | null)
+    | ({
+        relationTo: 'pages';
+        value: number | Page;
       } | null);
   globalSlug?: string | null;
   user:
@@ -909,6 +958,7 @@ export interface OrdersSelect<T extends boolean = true> {
         unitPrice?: T;
         id?: T;
       };
+  discountType?: T;
   promoCode?: T;
   discountPercent?: T;
   discountAmount?: T;
@@ -939,6 +989,8 @@ export interface CustomersSelect<T extends boolean = true> {
   name?: T;
   phone?: T;
   username?: T;
+  deliveryRegion?: T;
+  cdekPointCode?: T;
   addresses?:
     | T
     | {
@@ -1021,6 +1073,20 @@ export interface PromoCodesSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pages_select".
+ */
+export interface PagesSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  content?: T;
+  status?: T;
+  createdBy?: T;
+  updatedBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv_select".
  */
 export interface PayloadKvSelect<T extends boolean = true> {
@@ -1081,6 +1147,8 @@ export interface PayloadLlmInstructionsSelect<T extends boolean = true> {
  */
 export interface DeliveryPrice {
   id: number;
+  pickupEnabled?: boolean | null;
+  pickupAddress: string;
   belarus: number;
   moscow: number;
   russia: number;
@@ -1112,6 +1180,8 @@ export interface DeliveryPrice {
  * via the `definition` "delivery-prices_select".
  */
 export interface DeliveryPricesSelect<T extends boolean = true> {
+  pickupEnabled?: T;
+  pickupAddress?: T;
   belarus?: T;
   moscow?: T;
   russia?: T;
@@ -1160,7 +1230,8 @@ export interface CollectionQueryWidget {
       | 'orders'
       | 'customers'
       | 'customer-identities'
-      | 'promo-codes';
+      | 'promo-codes'
+      | 'pages';
     where?:
       | {
           [k: string]: unknown;
@@ -1194,6 +1265,7 @@ export interface ActivityWidget {
           | 'customers'
           | 'customer-identities'
           | 'promo-codes'
+          | 'pages'
         )[]
       | null;
   };

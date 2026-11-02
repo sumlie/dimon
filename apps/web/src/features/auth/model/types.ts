@@ -17,12 +17,23 @@ export type CustomerAddress = {
   isDefault?: boolean | null;
 };
 
+export type DeliveryRegion =
+  | "belarus"
+  | "moscow"
+  | "russia"
+  | "cis"
+  | "world";
+
 export type AuthCustomer = {
   id: number;
   email: string;
   name: string;
   phone: string | null;
   username: string | null;
+
+  deliveryRegion: DeliveryRegion | null;
+  cdekPointCode: string | null;
+
   addresses: CustomerAddress[];
   defaultPaymentMethod: string | null;
   emailVerifiedAt: string | null;

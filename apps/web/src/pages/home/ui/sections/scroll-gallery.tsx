@@ -115,44 +115,14 @@ export function ScrollGallery({ photos }: { photos: string[] }) {
     return null;
   }
 
-  const photosByRow: string[][] = [[], [], []];
-
-  uniquePhotos.forEach((photo, index) => {
-    photosByRow[index % 3].push(photo);
-  });
-
-  const rows = [
-    {
-      photos: photosByRow[0],
-      reverse: false,
-      duration: 70,
-      height: "h-[220px] sm:h-[320px]",
-    },
-    {
-      photos: photosByRow[1],
-      reverse: true,
-      duration: 85,
-      height: "h-[220px] sm:h-[320px]",
-    },
-    {
-      photos: photosByRow[2],
-      reverse: false,
-      duration: 60,
-      height: "h-[220px] sm:h-[320px]",
-    },
-  ];
-
   return (
-    <section className="flex flex-col gap-0.5 overflow-hidden bg-black py-0.5 sm:gap-1 sm:py-1">
-      {rows.map((row, index) => (
-        <Row
-          key={index}
-          photos={row.photos}
-          reverse={row.reverse}
-          duration={row.duration}
-          height={row.height}
-        />
-      ))}
+    <section className="overflow-hidden bg-black py-0.5 sm:py-1">
+      <Row
+        photos={uniquePhotos}
+        reverse={false}
+        duration={70}
+        height="h-[220px] sm:h-[380px]"
+      />
     </section>
   );
 }

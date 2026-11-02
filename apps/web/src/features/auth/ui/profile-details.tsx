@@ -3,15 +3,30 @@
 import { useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 import { ArrowRight } from "lucide-react";
+
 import { Button } from "@/shared/ui/button/button";
+import { useCurrentCustomer } from "@/features/auth";
 
 import { updateProfile } from "../api/auth";
-import type { AuthCustomer } from "../model/types";
+import type { AuthCustomer, DeliveryRegion } from "../model/types";
 
 type ProfileDetailsProps = {
   customer: AuthCustomer;
   refresh: () => Promise<void>;
 };
+
+type DeliveryMethod = "" | "cdek" | "belmail" | "euromail";
+
+const DELIVERY_REGIONS: {
+  value: DeliveryRegion;
+  label: string;
+}[] = [
+  { value: "belarus", label: "Беларусь" },
+  { value: "moscow", label: "Москва и Московская область" },
+  { value: "russia", label: "Другие регионы России" },
+  { value: "cis", label: "Страны СНГ" },
+  { value: "world", label: "Остальной мир" },
+];
 
 const DELIVERY_LABELS: Record<string, string> = {
   cdek: "сдэк",
@@ -24,6 +39,18 @@ const inputClassName =
 
 const labelClassName =
   "flex flex-col gap-2 font-sans text-sm lowercase text-black";
+
+// const CdekMap = dynamic(
+//   () => import("../../cart/ui/cdek-widget"),
+//   {
+//     ssr: false,
+//     loading: () => (
+//       <div className="flex h-[350px] items-center justify-center border border-black/20 font-sans text-sm lowercase text-black/50">
+//         загружаем карту...
+//       </div>
+//     ),
+//   },
+// );
 
 function InfoRow({
   label,
@@ -43,10 +70,37 @@ function InfoRow({
   );
 }
 
+function getDeliveryMethod(value?: string | null): DeliveryMethod {
+  if (
+    value === "cdek" ||
+    value === "belmail" ||
+    value === "euromail"
+  ) {
+    return value;
+  }
+
+  return "";
+}
+
 export function ProfileDetails({
   customer,
   refresh,
 }: ProfileDetailsProps) {
+  const { identities } = useCurrentCustomer();
+
+  const hasTelegram = identities.some(
+    (identity) => identity.provider === "telegram",
+  );
+
+  const hasEmailProvider = identities.some(
+    (identity) =>
+      identity.provider === "google" ||
+      identity.provider === "yandex",
+  );
+
+  const lockUsername = hasTelegram && Boolean(customer.username?.trim());
+  const lockEmail = hasEmailProvider;
+
   const defaultAddress = customer.addresses.find(
     (address) => address.isDefault,
   );
@@ -56,14 +110,39 @@ export function ProfileDetails({
   const [error, setError] = useState<string | null>(null);
 
   const [name, setName] = useState(customer.name);
+  const [email, setEmail] = useState(customer.email);
   const [phone, setPhone] = useState(customer.phone ?? "");
-  const [username, setUsername] = useState(customer.username ?? "");
-  const [deliveryMethod, setDeliveryMethod] = useState(
-    defaultAddress?.deliveryMethod ?? "",
+  const [username, setUsername] = useState(
+    customer.username ?? "",
   );
+
+  const [deliveryRegion, setDeliveryRegion] = useState<
+    DeliveryRegion | ""
+  >(customer.deliveryRegion ?? "");
+
+  const [deliveryMethod, setDeliveryMethod] =
+    useState<DeliveryMethod>(
+      getDeliveryMethod(defaultAddress?.deliveryMethod),
+    );
+
   const [deliveryAddress, setDeliveryAddress] = useState(
     defaultAddress?.address ?? "",
   );
+
+  const [cdekPointCode, setCdekPointCode] = useState(
+    customer.cdekPointCode ?? "",
+  );
+
+  const cdekCountry =
+    deliveryRegion === "belarus"
+      ? "BY"
+      : deliveryRegion === "moscow" ||
+          deliveryRegion === "russia"
+        ? "RU"
+        : null;
+
+  const usesCdekMap =
+    deliveryMethod === "cdek" && cdekCountry !== null;
 
   const resetFields = () => {
     const currentAddress = customer.addresses.find(
@@ -71,10 +150,17 @@ export function ProfileDetails({
     );
 
     setName(customer.name);
+    setEmail(customer.email);
     setPhone(customer.phone ?? "");
     setUsername(customer.username ?? "");
-    setDeliveryMethod(currentAddress?.deliveryMethod ?? "");
+
+    setDeliveryRegion(customer.deliveryRegion ?? "");
+    setDeliveryMethod(
+      getDeliveryMethod(currentAddress?.deliveryMethod),
+    );
     setDeliveryAddress(currentAddress?.address ?? "");
+    setCdekPointCode(customer.cdekPointCode ?? "");
+
     setError(null);
   };
 
@@ -88,8 +174,20 @@ export function ProfileDetails({
     setEditing(false);
   };
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+  const clearDelivery = () => {
+    setDeliveryRegion("");
+    setDeliveryMethod("");
+    setDeliveryAddress("");
+    setCdekPointCode("");
+    setError(null);
+  };
+
+  const handleSubmit = async (
+    event: FormEvent<HTMLFormElement>,
+  ) => {
     event.preventDefault();
+
+    if (saving) return;
 
     setError(null);
 
@@ -101,8 +199,20 @@ export function ProfileDetails({
       return;
     }
 
-    if (Boolean(deliveryMethod) !== Boolean(trimmedAddress)) {
-      setError("Укажи способ доставки и адрес или оставь оба поля пустыми.");
+    const hasDeliveryData = Boolean(
+      deliveryRegion ||
+        deliveryMethod ||
+        trimmedAddress ||
+        cdekPointCode,
+    );
+
+    if (
+      hasDeliveryData &&
+      (!deliveryRegion || !deliveryMethod || !trimmedAddress)
+    ) {
+      setError(
+        "Укажи регион, способ и адрес доставки или очисти данные доставки.",
+      );
       return;
     }
 
@@ -113,18 +223,27 @@ export function ProfileDetails({
         name: trimmedName,
         phone: phone.trim(),
         username: username.trim(),
+
+        deliveryRegion,
         deliveryMethod,
         deliveryAddress: trimmedAddress,
+        cdekPointCode: deliveryMethod === "cdek" ? cdekPointCode : "",
       });
 
-      setEditing(false);
       await refresh();
+      setEditing(false);
     } catch {
-      setError("Не удалось сохранить данные. Попробуй ещё раз.");
+      setError(
+        "Не удалось сохранить данные. Попробуй ещё раз.",
+      );
     } finally {
       setSaving(false);
     }
   };
+
+  const regionLabel = DELIVERY_REGIONS.find(
+    (region) => region.value === customer.deliveryRegion,
+  )?.label;
 
   const deliveryLabel = defaultAddress?.deliveryMethod
     ? DELIVERY_LABELS[defaultAddress.deliveryMethod] ??
@@ -179,6 +298,10 @@ export function ProfileDetails({
             {customer.phone || "не указан"}
           </InfoRow>
 
+          <InfoRow label="регион доставки">
+            {regionLabel || "не указан"}
+          </InfoRow>
+
           <InfoRow label="способ доставки">
             {deliveryLabel}
           </InfoRow>
@@ -186,6 +309,13 @@ export function ProfileDetails({
           <InfoRow label="адрес доставки">
             {defaultAddress?.address || "не указан"}
           </InfoRow>
+
+          {defaultAddress?.deliveryMethod === "cdek" &&
+            customer.cdekPointCode && (
+              <InfoRow label="код пункта сдэк">
+                {customer.cdekPointCode}
+              </InfoRow>
+            )}
         </div>
       ) : (
         <form
@@ -198,7 +328,9 @@ export function ProfileDetails({
 
               <input
                 value={name}
-                onChange={(event) => setName(event.target.value)}
+                onChange={(event) =>
+                  setName(event.target.value)
+                }
                 type="text"
                 autoComplete="name"
                 required
@@ -212,15 +344,25 @@ export function ProfileDetails({
               email
 
               <input
-                value={customer.email}
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
                 type="email"
-                readOnly
-                className={`${inputClassName} bg-neutral-50 text-black/50`}
+                autoComplete="email"
+                required
+                maxLength={254}
+                readOnly={lockEmail}
+                className={
+                  lockEmail
+                    ? `${inputClassName} bg-neutral-50 text-black/50`
+                    : inputClassName
+                }
               />
 
-              <span className="text-xs text-black/40">
-                email аккаунта нельзя изменить здесь
-              </span>
+              {lockEmail && (
+                <span className="text-xs text-black/40">
+                  email связан с Google или Яндексом
+                </span>
+              )}
             </label>
 
             <label className={labelClassName}>
@@ -232,8 +374,19 @@ export function ProfileDetails({
                 type="text"
                 maxLength={33}
                 placeholder="@username"
-                className={inputClassName}
+                readOnly={lockUsername}
+                className={
+                  lockUsername
+                    ? `${inputClassName} bg-neutral-50 text-black/50`
+                    : inputClassName
+                }
               />
+
+              {lockUsername && (
+                <span className="text-xs text-black/40">
+                  telegram привязан к аккаунту
+                </span>
+              )}
             </label>
 
             <label className={labelClassName}>
@@ -241,7 +394,9 @@ export function ProfileDetails({
 
               <input
                 value={phone}
-                onChange={(event) => setPhone(event.target.value)}
+                onChange={(event) =>
+                  setPhone(event.target.value)
+                }
                 type="tel"
                 autoComplete="tel"
                 maxLength={30}
@@ -252,16 +407,69 @@ export function ProfileDetails({
           </div>
 
           <div className="mt-8 border-t border-black/20 pt-6">
-            <h3 className="font-sans text-lg font-extrabold lowercase text-black">
-              доставка
-            </h3>
+            <div className="flex items-center justify-between gap-4">
+              <h3 className="font-sans text-lg font-extrabold lowercase text-black">
+                доставка
+              </h3>
+
+              <button
+                type="button"
+                onClick={clearDelivery}
+                className="font-sans text-xs lowercase text-black/50 transition-colors hover:text-red-600"
+              >
+                очистить
+              </button>
+            </div>
+
+            <p className="mt-2 font-sans text-xs leading-relaxed text-black/40">
+              сохрани адрес для будущих заказов
+            </p>
+
+            <label className={`${labelClassName} mt-5`}>
+              регион доставки
+
+              <select
+                value={deliveryRegion}
+                onChange={(event) => {
+                  setDeliveryRegion(
+                    event.target.value as DeliveryRegion | "",
+                  );
+
+                  // При смене региона старый пункт больше
+                  // нельзя считать подходящим.
+                  setDeliveryAddress("");
+                  setCdekPointCode("");
+                  setError(null);
+                }}
+                className={inputClassName}
+              >
+                <option value="">не выбран</option>
+
+                {DELIVERY_REGIONS.map((region) => (
+                  <option
+                    key={region.value}
+                    value={region.value}
+                  >
+                    {region.label}
+                  </option>
+                ))}
+              </select>
+            </label>
 
             <label className={`${labelClassName} mt-5`}>
               способ доставки
 
               <select
                 value={deliveryMethod}
-                onChange={(event) => setDeliveryMethod(event.target.value)}
+                onChange={(event) => {
+                  setDeliveryMethod(
+                    event.target.value as DeliveryMethod,
+                  );
+
+                  setDeliveryAddress("");
+                  setCdekPointCode("");
+                  setError(null);
+                }}
                 className={inputClassName}
               >
                 <option value="">не выбран</option>
@@ -271,23 +479,41 @@ export function ProfileDetails({
               </select>
             </label>
 
-            <label className={`${labelClassName} mt-5`}>
-              адрес или пункт выдачи
+            {deliveryMethod && deliveryRegion && (
+              <div className="mt-5">
+                <label className={labelClassName}>
+                  {deliveryMethod === "cdek"
+                    ? "адрес пункта сдэк"
+                    : "адрес или пункт выдачи"}
 
-              <textarea
-                value={deliveryAddress}
-                onChange={(event) => setDeliveryAddress(event.target.value)}
-                rows={3}
-                maxLength={500}
-                placeholder="страна, город, адрес или адрес пункта выдачи"
-                className={`${inputClassName} resize-y`}
-              />
-            </label>
+                  <textarea
+                    value={deliveryAddress}
+                    onChange={(event) => {
+                      setDeliveryAddress(event.target.value);
 
-            <p className="mt-2 font-sans text-xs leading-relaxed text-black/40">
-              чтобы удалить сохранённый адрес, очисти поле и выбери
-              «не выбран» в способе доставки.
-            </p>
+                      setCdekPointCode("");
+
+                      setError(null);
+                    }}
+                    rows={3}
+                    maxLength={500}
+                    placeholder="страна, город, адрес или адрес пункта выдачи"
+                    className={`${inputClassName} resize-y`}
+                  />
+                </label>
+
+                {deliveryMethod === "cdek" && (
+                  <a
+                    href="https://www.cdek.ru/ru/offices/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-3 inline-block font-sans text-xs text-black/60 underline underline-offset-2 transition-colors hover:text-red-600"
+                  >
+                    найти пункт на карте сдэк
+                  </a>
+                )}
+              </div>
+            )}
           </div>
 
           {error && (

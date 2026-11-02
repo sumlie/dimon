@@ -5,6 +5,12 @@ import { completeOnboarding, fetchOnboardingProfile } from "@/features/auth";
 import { Button } from "@/shared/ui/button/button";
 import { Spinner } from "@/shared/ui/spinner";
 
+const inputClassName =
+  "w-full border border-black/20 bg-white px-4 py-3 font-sans text-sm text-black outline-none transition-colors placeholder:text-black/30 focus:border-black";
+
+const labelClassName =
+  "flex flex-col gap-2 font-sans text-sm lowercase text-black";
+
 export function AuthCompletePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -94,26 +100,36 @@ export function AuthCompletePage() {
         onSubmit={(event) => void submit(event)}
         className="mt-8 flex flex-col gap-5"
       >
-        <label className="flex flex-col gap-2 font-sans text-sm">
-          <span>Имя</span>
+        <label className={labelClassName}>
+          <span>
+            имя <span className="text-red-600">*</span>
+          </span>
+
           <input
             required
             minLength={1}
             maxLength={120}
+            autoComplete="name"
+            placeholder="как к тебе обращаться"
             value={name}
             onChange={(event) => setName(event.target.value)}
-            className="border-2 border-black bg-transparent px-3 py-2 outline-none focus:border-red-600"
+            className={inputClassName}
           />
         </label>
 
-        <label className="flex flex-col gap-2 font-sans text-sm">
-          <span>Email</span>
+        <label className={labelClassName}>
+          <span>
+            email <span className="text-red-600">*</span>
+          </span>
+
           <input
             required
             type="email"
+            autoComplete="email"
+            placeholder="example@mail.com"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            className="border-2 border-black bg-transparent px-3 py-2 outline-none focus:border-red-600"
+            className={inputClassName}
           />
         </label>
 

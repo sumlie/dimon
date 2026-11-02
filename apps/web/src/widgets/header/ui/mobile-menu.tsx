@@ -48,6 +48,8 @@ export function MobileMenu({ onClose }: MobileMenuProps) {
               <li key={link.href} className="border-b border-black/20">
                 <Button
                   href={link.href}
+                  target={link.external ? "_blank" : undefined}
+                  rel={link.external ? "noopener noreferrer" : undefined}
                   variant="text"
                   pd="none"
                   onClick={onClose}

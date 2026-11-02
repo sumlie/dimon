@@ -100,8 +100,10 @@ export type UpdateProfileData = {
   name: string;
   phone: string;
   username: string;
+  deliveryRegion: string;
   deliveryMethod: string;
   deliveryAddress: string;
+  cdekPointCode: string;
 };
 
 export async function updateProfile(data: UpdateProfileData): Promise<void> {

@@ -26,7 +26,9 @@ export async function fetchGalleryPhotos(): Promise<string[]> {
   });
 
   const res = await fetch(`${PAYLOAD_URL}/api/media?${params}`, {
-    cache: "no-store",
+    next: {
+      revalidate: 300,
+    },
   });
 
   if (!res.ok) {
@@ -41,7 +43,23 @@ export async function fetchGalleryPhotos(): Promise<string[]> {
     .map((photo) => {
       if (!photo.url) return null;
 
-      return new URL(photo.url, PAYLOAD_URL).toString();
+      try {
+        const url = new URL(photo.url, PAYLOAD_URL);
+        const payloadOrigin = new URL(PAYLOAD_URL).origin;
+
+        // Медиа Payload загружается через текущий домен сайта.
+        if (
+          url.origin === payloadOrigin &&
+          url.pathname.startsWith("/api/media/")
+        ) {
+          return `${url.pathname}${url.search}`;
+        }
+
+        // Внешние ссылки оставляем как есть.
+        return url.toString();
+      } catch {
+        return null;
+      }
     })
     .filter((url): url is string => url !== null);
 }

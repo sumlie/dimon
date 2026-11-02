@@ -3,7 +3,7 @@ import type { GlobalConfig } from 'payload'
 export const DeliveryPrices: GlobalConfig = {
   slug: 'delivery-prices',
 
-  label: 'Delivery prices',
+  label: 'Delivery and pickup',
 
   admin: {
     group: 'Tweaks',
@@ -15,6 +15,19 @@ export const DeliveryPrices: GlobalConfig = {
   },
 
   fields: [
+    {
+      name: 'pickupEnabled',
+      type: 'checkbox',
+      label: 'Самовывоз доступен',
+      defaultValue: true,
+    },
+    {
+      name: 'pickupAddress',
+      type: 'text',
+      label: 'Адрес самовывоза',
+      required: true,
+      defaultValue: 'Минск, проспект Машерова, 60',
+    },
     {
       name: 'belarus',
       type: 'number',

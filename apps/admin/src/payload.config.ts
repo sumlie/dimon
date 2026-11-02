@@ -15,6 +15,7 @@ import { Products } from './modules/products'
 import { Orders } from './modules/orders'
 import { Customers, CustomerIdentities } from './modules/customers'
 import { PromoCodes } from './modules/promocodes'
+import { Pages } from './modules/pages'
 
 // import { OwnerInfo, SocialLinks } from './modules/settings'
 import { DeliveryPrices } from './modules/settings'
@@ -42,6 +43,7 @@ export default buildConfig({
     Customers,
     CustomerIdentities,
     PromoCodes,
+    Pages,
   ],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',

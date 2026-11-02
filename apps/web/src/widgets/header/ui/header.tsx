@@ -68,7 +68,14 @@ export function Header({ showLogo = false }: HeaderProps) {
     >
       <nav className="hidden items-center gap-8 font-sans text-lg lowercase lg:flex">
         {NAV_LINKS.map((link) => (
-          <Button key={link.label} href={link.href} variant="text" pd="none">
+          <Button
+            key={link.label}
+            href={link.href}
+            target={link.external ? "_blank" : undefined}
+            rel={link.external ? "noopener noreferrer" : undefined}
+            variant="text"
+            pd="none"
+          >
             {link.label}
           </Button>
         ))}
@@ -99,7 +106,7 @@ export function Header({ showLogo = false }: HeaderProps) {
 
       <nav className="flex items-start gap-4 font-sans lg:gap-8">
         <Button
-          href="#!"
+          href="https://t.me/dimionclo"
           variant="social"
           size="mini"
           pd="none"

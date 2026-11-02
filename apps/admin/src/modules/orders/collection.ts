@@ -87,6 +87,20 @@ export const Orders: CollectionConfig = {
       ],
     },
     {
+      name: 'discountType',
+      type: 'select',
+      label: 'Тип скидки',
+      defaultValue: 'none',
+      options: [
+        { label: 'Без скидки', value: 'none' },
+        { label: 'Первый заказ', value: 'first_order' },
+        { label: 'Промокод', value: 'promo_code' },
+      ],
+      admin: {
+        readOnly: true,
+      },
+    },
+    {
       name: 'promoCode',
       type: 'text',
       label: 'Промокод',

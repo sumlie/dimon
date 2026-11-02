@@ -18,6 +18,10 @@ const nextConfig: NextConfig = {
         source: "/api/auth/:path*",
         destination: `${adminApiUrl}/api/auth/:path*`,
       },
+      {
+        source: "/api/media/:path*",
+        destination: `${adminApiUrl}/api/media/:path*`,
+      },
     ];
   },
 };

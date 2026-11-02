@@ -7,8 +7,26 @@ type ProfileBody = {
   name?: unknown
   phone?: unknown
   username?: unknown
+  deliveryRegion?: unknown
   deliveryMethod?: unknown
   deliveryAddress?: unknown
+  cdekPointCode?: unknown
+}
+
+const REGIONS = [
+  'belarus',
+  'moscow',
+  'russia',
+  'cis',
+  'world',
+] as const
+
+type DeliveryRegion = (typeof REGIONS)[number]
+
+const METHODS = ['cdek', 'belmail', 'euromail'] as const
+
+function isDeliveryRegion(value: string): value is DeliveryRegion {
+  return REGIONS.some((region) => region === value)
 }
 
 function optionalText(value: unknown, maxLength: number): string {
@@ -27,6 +45,7 @@ function optionalText(value: unknown, maxLength: number): string {
 
 export async function handleUpdateProfile(request: Request): Promise<Response> {
   const originError = checkOrigin(request)
+
   if (originError) return originError
 
   try {
@@ -54,28 +73,60 @@ export async function handleUpdateProfile(request: Request): Promise<Response> {
     const name = optionalText(body.name, 120)
     const phone = optionalText(body.phone, 30)
     const username = optionalText(body.username, 33)
+
+    const deliveryRegion = optionalText(body.deliveryRegion, 30)
     const deliveryMethod = optionalText(body.deliveryMethod, 50)
     const deliveryAddress = optionalText(body.deliveryAddress, 500)
+    const cdekPointCode = optionalText(body.cdekPointCode, 100)
 
     if (!name) {
       throw new AuthError('name_required', 'Name is required', 400)
     }
 
-    const allowedMethods = ['', 'cdek', 'belmail', 'euromail']
+    if (deliveryRegion && !isDeliveryRegion(deliveryRegion)) {
+      throw new AuthError('invalid_request', 'Invalid delivery region', 400)
+    }
 
-    if (!allowedMethods.includes(deliveryMethod)) {
+    if (
+      deliveryMethod &&
+      !METHODS.some((method) => method === deliveryMethod)
+    ) {
       throw new AuthError('invalid_request', 'Invalid delivery method', 400)
     }
 
-    if (deliveryMethod && !deliveryAddress) {
-      throw new AuthError('invalid_request', 'Delivery address is required', 400)
+    const hasDeliveryData = Boolean(
+      deliveryRegion || deliveryMethod || deliveryAddress || cdekPointCode,
+    )
+
+    if (
+      hasDeliveryData &&
+      (!deliveryRegion || !deliveryMethod || !deliveryAddress)
+    ) {
+      throw new AuthError(
+        'invalid_request',
+        'Delivery region, method and address are required',
+        400,
+      )
     }
 
-    if (deliveryAddress && !deliveryMethod) {
-      throw new AuthError('invalid_request', 'Delivery method is required', 400)
+    const usesCdekMap =
+      deliveryMethod === 'cdek' &&
+      (
+        deliveryRegion === 'belarus' ||
+        deliveryRegion === 'moscow' ||
+        deliveryRegion === 'russia'
+      )
+
+    if (!usesCdekMap && cdekPointCode) {
+      throw new AuthError(
+        'invalid_request',
+        'Unexpected CDEK pickup point',
+        400,
+      )
     }
 
     const existingAddresses = user.addresses ?? []
+
     const defaultIndex = existingAddresses.findIndex(
       (address) => address.isDefault,
     )
@@ -84,7 +135,9 @@ export async function handleUpdateProfile(request: Request): Promise<Response> {
 
     if (deliveryAddress) {
       const previousDefault =
-        defaultIndex >= 0 ? existingAddresses[defaultIndex] : undefined
+        defaultIndex >= 0
+          ? existingAddresses[defaultIndex]
+          : undefined
 
       const updatedDefault = {
         ...previousDefault,
@@ -107,7 +160,9 @@ export async function handleUpdateProfile(request: Request): Promise<Response> {
         addresses.push(updatedDefault)
       }
     } else if (defaultIndex >= 0) {
-      addresses = addresses.filter((_, index) => index !== defaultIndex)
+      addresses = addresses.filter(
+        (_, index) => index !== defaultIndex,
+      )
     }
 
     const updatedCustomer = await payload.update({
@@ -117,6 +172,14 @@ export async function handleUpdateProfile(request: Request): Promise<Response> {
         name,
         phone: phone || null,
         username: username || null,
+
+        deliveryRegion:
+          deliveryRegion && isDeliveryRegion(deliveryRegion)
+            ? deliveryRegion
+            : null,
+
+        cdekPointCode: usesCdekMap ? cdekPointCode : null,
+
         addresses,
       },
       user,

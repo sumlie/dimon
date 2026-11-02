@@ -1,8 +1,9 @@
-import config from '@payload-config'
 import { sql } from '@payloadcms/db-postgres'
-import { getPayload } from 'payload'
 
 import type { Order } from '@/payloadTypes'
+
+import { authenticateRequest } from '@/modules/auth/request'
+import { listCustomerIdentities } from '@/modules/auth/identities'
 
 type CheckoutItem = {
   product: number
@@ -180,15 +181,6 @@ function validateBody(value: unknown): CheckoutBody | string {
     return 'Укажи адрес доставки или пункт выдачи'
   }
 
-  const cdekMapRegion =
-    deliveryRegion === 'belarus' ||
-    deliveryRegion === 'moscow' ||
-    deliveryRegion === 'russia'
-
-  if (deliveryMethod === 'cdek' && cdekMapRegion && !cdekPointCode) {
-    return 'Выбери пункт выдачи СДЭК'
-  }
-
   const normalizedPromoCode = promoCode.toUpperCase()
 
   if (
@@ -228,7 +220,8 @@ export async function POST(request: Request): Promise<Response> {
     return badRequest(body)
   }
 
-  const payload = await getPayload({ config })
+  const { payload, req: authReq, user } =
+    await authenticateRequest(request)
 
   let transactionID: string | number | null = null
 
@@ -258,10 +251,43 @@ export async function POST(request: Request): Promise<Response> {
 
     const transactionDb = session.db as unknown as PostgresTransaction
 
-    const req = {
-      payload,
-      transactionID,
-    }
+    const req = authReq
+    req.transactionID = transactionID
+
+    const customer =
+      user?.collection === 'customers' && !user.isBlocked
+        ? user
+        : null
+
+    let firstOrderEligible = false
+
+    if (customer) {
+      // Все checkout-запросы одного покупателя ждут освобождения
+      // этой строки до завершения предыдущей транзакции.
+      const customerLock = await transactionDb.execute(sql`
+        SELECT id
+        FROM customers
+        WHERE id = ${customer.id}
+        FOR UPDATE
+      `)
+
+      if (customerLock.rows.length === 0) {
+        throw new CheckoutError('Аккаунт покупателя не найден', 401)
+      }
+
+      const previousOrders = await payload.find({
+        collection: 'orders',
+        where: {
+          customer: { equals: customer.id },
+        },
+        limit: 1,
+        depth: 0,
+        overrideAccess: true,
+        req,
+      })
+
+      firstOrderEligible = previousOrders.docs.length === 0
+}
 
     const deliveryPrices = await payload.findGlobal({
       slug: 'delivery-prices',
@@ -269,6 +295,11 @@ export async function POST(request: Request): Promise<Response> {
       overrideAccess: true,
       req,
     })
+
+    if (body.deliveryMethod === 'pickup' &&
+        (!deliveryPrices.pickupEnabled || !deliveryPrices.pickupAddress?.trim())) {
+      throw new CheckoutError('Самовывоз сейчас недоступен. Выбери доставку.', 409)
+    }
 
     const deliveryPrice =
       body.deliveryMethod === 'pickup'
@@ -284,6 +315,28 @@ export async function POST(request: Request): Promise<Response> {
         'Не удалось определить стоимость доставки. Попробуй позже.',
         500,
       )
+    }
+
+    const sortedItems = [...body.items].sort(
+      (a, b) => a.product - b.product,
+    )
+
+    for (const item of sortedItems) {
+      const stockResult = await transactionDb.execute(sql`
+        UPDATE products
+        SET stock = stock - ${item.quantity}
+        WHERE id = ${item.product}
+          AND status = 'published'
+          AND stock >= ${item.quantity}
+        RETURNING id
+      `)
+
+      if (stockResult.rows.length === 0) {
+        throw new CheckoutError(
+          'Некоторые товары закончились или их осталось меньше, чем в корзине. Обнови страницу и проверь заказ.',
+          409,
+        )
+      }
     }
 
     const ids = body.items.map((item) => item.product)
@@ -331,16 +384,14 @@ export async function POST(request: Request): Promise<Response> {
       }
     })
 
-    let discountPercent = 0
+    let discountPercent = firstOrderEligible ? 10 : 0
+
+    let discountType: 'none' | 'first_order' | 'promo_code' =
+      firstOrderEligible ? 'first_order' : 'none'
+
     let appliedPromoCode: string | undefined
 
     if (body.promoCode) {
-      /*
-       * Предполагаемые имена таблицы и полей:
-       * promo_codes, used_count, max_uses, starts_at, expires_at.
-       *
-       * Запрос блокирует строку промокода до завершения транзакции.
-       */
       const result = await transactionDb.execute(sql`
         SELECT
           id,
@@ -395,24 +446,28 @@ export async function POST(request: Request): Promise<Response> {
         )
       }
 
-      const percent = Number(promo.discount_percent)
+      const promoPercent = Number(promo.discount_percent)
 
       if (
-        !Number.isInteger(percent) ||
-        percent < 1 ||
-        percent > 100
+        !Number.isInteger(promoPercent) ||
+        promoPercent < 1 ||
+        promoPercent > 100
       ) {
         throw new CheckoutError('У промокода некорректная скидка')
       }
 
-      discountPercent = percent
-      appliedPromoCode = promo.code
+      // При равных скидках оставляем скидку за первый заказ.
+      if (promoPercent > discountPercent) {
+        discountPercent = promoPercent
+        discountType = 'promo_code'
+        appliedPromoCode = promo.code
 
-      await transactionDb.execute(sql`
-        UPDATE promo_codes
-        SET used_count = used_count + 1
-        WHERE id = ${promo.id}
-      `)
+        await transactionDb.execute(sql`
+          UPDATE promo_codes
+          SET used_count = used_count + 1
+          WHERE id = ${promo.id}
+        `)
+      }
     }
 
     const productsTotalKopecks = items.reduce(
@@ -432,10 +487,34 @@ export async function POST(request: Request): Promise<Response> {
 
     const deliveryAddress =
       body.deliveryMethod === 'pickup'
-        ? 'Минск, проспект Машерова, 60'
+        ? deliveryPrices.pickupAddress!.trim()
         : body.deliveryMethod === 'cdek' && body.cdekPointCode
           ? `${body.deliveryAddress}\nКод ПВЗ СДЭК: ${body.cdekPointCode}`
           : body.deliveryAddress
+
+    const identities = customer
+      ? await listCustomerIdentities(payload, customer.id)
+      : []
+
+    const hasEmailProvider = identities.some(
+      (identity) =>
+        identity.provider === 'google' ||
+        identity.provider === 'yandex',
+    )
+
+    const hasTelegramProvider = identities.some(
+      (identity) => identity.provider === 'telegram',
+    )
+
+    const orderEmail =
+      customer && hasEmailProvider
+        ? customer.email
+        : body.email
+
+    const orderUsername =
+      customer && hasTelegramProvider && customer.username?.trim()
+        ? customer.username.trim()
+        : body.username
 
     const order = await payload.create({
       collection: 'orders',
@@ -446,6 +525,7 @@ export async function POST(request: Request): Promise<Response> {
         total,
 
         promoCode: appliedPromoCode,
+        discountType,
         discountPercent,
         discountAmount: discountKopecks / 100,
         deliveryPrice: deliveryKopecks / 100,
@@ -454,8 +534,9 @@ export async function POST(request: Request): Promise<Response> {
         paymentStatus: 'pending',
 
         customerName: body.customerName,
-        username: body.username,
-        email: body.email,
+        username: orderUsername,
+        email: orderEmail,
+        customer: customer?.id,
         phone: body.phone || undefined,
 
         deliveryRegion: body.deliveryRegion,
@@ -466,6 +547,68 @@ export async function POST(request: Request): Promise<Response> {
       },
     })
 
+    // Дополняем профиль только там, где данных ещё нет.
+    // Изменения входят в ту же транзакцию, что и заказ.
+    if (customer) {
+      const profileUpdate: {
+        phone?: string
+        username?: string
+        deliveryRegion?: DeliveryRegion
+        cdekPointCode?: null
+        addresses?: NonNullable<typeof customer.addresses>
+      } = {}
+
+      if (!customer.phone?.trim() && body.phone) {
+        profileUpdate.phone = body.phone
+      }
+
+      // В профиле для username ограничение 33 символа.
+      // Не сохраняем более длинное значение и не заменяем существующее.
+      if (
+        !customer.username?.trim() &&
+        orderUsername &&
+        orderUsername.length <= 33
+      ) {
+        profileUpdate.username = orderUsername
+      }
+
+      // Самовывоз не записываем как адрес доставки.
+      if (body.deliveryMethod !== 'pickup') {
+        const addresses = customer.addresses ?? []
+
+        const hasDefaultAddress = addresses.some(
+          (address) => address.isDefault,
+        )
+
+        // Регион и адрес сохраняем вместе, чтобы не связать
+        // новый регион со старым сохранённым адресом.
+        if (!hasDefaultAddress && addresses.length < 5) {
+          profileUpdate.deliveryRegion = body.deliveryRegion
+          profileUpdate.cdekPointCode = null
+
+          profileUpdate.addresses = [
+            ...addresses,
+            {
+              deliveryMethod: body.deliveryMethod,
+              address: body.deliveryAddress,
+              isDefault: true,
+            },
+          ]
+        }
+      }
+
+      if (Object.keys(profileUpdate).length > 0) {
+        await payload.update({
+          collection: 'customers',
+          id: customer.id,
+          data: profileUpdate,
+          user: customer,
+          req,
+          overrideAccess: false,
+        })
+      }
+    }
+
     await payload.db.commitTransaction(transactionID)
     transactionID = null
 
@@ -474,6 +617,7 @@ export async function POST(request: Request): Promise<Response> {
         ok: true,
         id: order.id,
         total: order.total,
+        discountType,
         discountPercent,
         discountAmount: discountKopecks / 100,
       },

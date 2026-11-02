@@ -59,6 +59,10 @@ export function sanitizeCustomer(customer: any) {
     name: customer.name,
     username: customer.username || null,
     phone: customer.phone || null,
+
+    deliveryRegion: customer.deliveryRegion ?? null,
+    cdekPointCode: customer.cdekPointCode ?? null,
+
     addresses: customer.addresses || [],
     defaultPaymentMethod: customer.defaultPaymentMethod || null,
     emailVerifiedAt: customer.emailVerifiedAt || null,
@@ -138,6 +142,7 @@ async function createCustomerWithIdentity(args: {
       data: {
         email,
         name,
+        username: profile.username?.trim() || undefined,
         password: randomToken(32),
         socialOnly: true,
         ...(profile.emailVerified ? { _verified: true, emailVerifiedAt: now } : {}),

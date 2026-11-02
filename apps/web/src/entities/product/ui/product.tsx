@@ -21,6 +21,8 @@ export function Product({ product }: ProductProps) {
       : [];
 
   const multiple = images.length > 1;
+  const outOfStock = product.stock <= 0;
+
   const productHref = `/catalog/${encodeURIComponent(product.slug)}`;
 
   const handleMouseMove = (event: MouseEvent<HTMLDivElement>) => {
@@ -33,9 +35,13 @@ export function Product({ product }: ProductProps) {
     if (bounds.width === 0) return;
 
     const position = (event.clientX - bounds.left) / bounds.width;
+
     const nextIndex = Math.max(
       0,
-      Math.min(images.length - 1, Math.floor(position * images.length)),
+      Math.min(
+        images.length - 1,
+        Math.floor(position * images.length),
+      ),
     );
 
     scroller.scrollTo({
@@ -48,9 +54,13 @@ export function Product({ product }: ProductProps) {
     const scroller = scrollerRef.current;
     if (!scroller || scroller.clientWidth === 0) return;
 
-    const nextIndex = Math.round(scroller.scrollLeft / scroller.clientWidth);
+    const nextIndex = Math.round(
+      scroller.scrollLeft / scroller.clientWidth,
+    );
 
-    setActiveIndex(Math.max(0, Math.min(images.length - 1, nextIndex)));
+    setActiveIndex(
+      Math.max(0, Math.min(images.length - 1, nextIndex)),
+    );
   };
 
   return (
@@ -75,8 +85,8 @@ export function Product({ product }: ProductProps) {
                   src={src}
                   alt={`${product.name} — фото ${index + 1}`}
                   draggable={false}
-                  className="h-full w-full object-cover"
                   loading="lazy"
+                  className={`h-full w-full object-cover`}
                 />
               </Link>
             ))}
@@ -90,7 +100,19 @@ export function Product({ product }: ProductProps) {
           </Link>
         )}
 
-        {product.discount ? (
+        {outOfStock ? (
+          <>
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0"
+            />
+
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-between bg-black/85 px-3 py-2 font-sans text-xs font-bold lowercase text-white sm:px-4 sm:py-3 sm:text-sm">
+              <span>нет в наличии</span>
+              <span className="text-red-500">×</span>
+            </div>
+          </>
+        ) : product.discount ? (
           <span className="pointer-events-none absolute left-1.5 top-1.5 flex h-6 items-center justify-center bg-red-600 px-1.5 font-display text-xs leading-none text-white sm:left-2 sm:top-2 sm:h-8 sm:px-2 sm:text-sm">
             {product.discount}
           </span>
@@ -107,7 +129,9 @@ export function Product({ product }: ProductProps) {
               key={`${src}-${index}`}
               aria-hidden="true"
               className={`h-0.5 flex-1 transition-colors ${
-                index === activeIndex ? "bg-black" : "bg-neutral-200"
+                index === activeIndex
+                  ? "bg-black"
+                  : "bg-neutral-200"
               }`}
             />
           ))}
@@ -132,7 +156,9 @@ export function Product({ product }: ProductProps) {
 
             <span
               className={
-                product.oldPriceByn ? "text-red-600" : "text-neutral-500"
+                product.oldPriceByn
+                  ? "text-red-600"
+                  : "text-neutral-500"
               }
             >
               {product.priceByn} byn
@@ -141,7 +167,9 @@ export function Product({ product }: ProductProps) {
 
           <span className="flex items-baseline gap-1 text-xs text-neutral-400 sm:gap-1.5 sm:text-sm">
             {product.oldPrice ? (
-              <span className="line-through">{product.oldPrice} rub</span>
+              <span className="line-through">
+                {product.oldPrice} rub
+              </span>
             ) : null}
 
             <span className={product.oldPrice ? "text-red-500" : ""}>

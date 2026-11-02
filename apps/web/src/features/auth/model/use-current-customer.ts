@@ -1,38 +1,33 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { fetchMe, logoutCustomer } from "../api/auth";
-import type { MeResponse } from "./types";
+import { useEffect } from "react";
 
-const EMPTY: MeResponse = { customer: null, identities: [] };
+import { useAuthStore } from "./store";
 
 export function useCurrentCustomer() {
-  const [data, setData] = useState<MeResponse>(EMPTY);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const customer = useAuthStore((state) => state.customer);
+  const identities = useAuthStore((state) => state.identities);
 
-  const refresh = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  const loading = useAuthStore(
+    (state) => state.loading || !state.initialized,
+  );
 
-    try {
-      setData(await fetchMe());
-    } catch {
-      setData(EMPTY);
-      setError("Не удалось загрузить профиль");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const error = useAuthStore((state) => state.error);
 
-  const signOut = useCallback(async () => {
-    await logoutCustomer();
-    setData(EMPTY);
-  }, []);
+  const ensureLoaded = useAuthStore((state) => state.ensureLoaded);
+  const refresh = useAuthStore((state) => state.refresh);
+  const signOut = useAuthStore((state) => state.signOut);
 
   useEffect(() => {
-    void refresh();
-  }, [refresh]);
+    void ensureLoaded();
+  }, [ensureLoaded]);
 
-  return { ...data, loading, error, refresh, signOut };
+  return {
+    customer,
+    identities,
+    loading,
+    error,
+    refresh,
+    signOut,
+  };
 }
